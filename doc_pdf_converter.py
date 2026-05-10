@@ -11,8 +11,6 @@ Usage:
 import argparse
 import os
 import sys
-import tkinter as tk
-from tkinter import filedialog, messagebox, ttk
 from pathlib import Path
 from typing import Optional
 
@@ -511,6 +509,8 @@ def convert(input_path: str, output_path: Optional[str] = None) -> str:
 
 def run_gui():
     """Simple Tkinter GUI with file picker and drag-drop support."""
+    import tkinter as tk
+    from tkinter import filedialog, messagebox, ttk
     root = tk.Tk()
     root.title("文档 & 图片互转工具")
     root.geometry("520x320")
