@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: doc-pdf-converter
+    env: python
+    buildCommand: |
+      apt-get update -qq && apt-get install -y -qq libreoffice-core libreoffice-writer 2>/dev/null || true
+      pip install -r requirements.txt
+    startCommand: python server.py
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: HOST
+        value: 0.0.0.0
+      - key: RENDER
+        value: "1"
