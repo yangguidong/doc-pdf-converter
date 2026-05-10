@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+*.pyo
+build/
+dist/
+*.spec
+.env
+temp/
+*.exe
+perf_test.*
+test_*
