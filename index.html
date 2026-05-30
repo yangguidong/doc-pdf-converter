@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Portfolio — Art & Design</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- Edit Toolbar -->
+  <div class="edit-toolbar" id="editToolbar">
+    <span style="color:var(--edit);font-weight:600;font-size:.8rem;">✎ 编辑模式</span>
+    <button class="edit-toolbar__btn" id="btnAddPhoto">＋ 图片</button>
+    <button class="edit-toolbar__btn" id="btnAddVideo">＋ 视频</button>
+    <button class="edit-toolbar__btn" id="btnAddDoc" style="color:#a78bfa;background:rgba(167,139,250,.1);border-color:rgba(167,139,250,.2);">＋ PDF文档</button>
+    <button class="edit-toolbar__btn edit-toolbar__btn--success" id="btnExport">⬇ 导出</button>
+    <button class="edit-toolbar__btn" id="btnImport">⬆ 导入</button>
+    <button class="edit-toolbar__btn edit-toolbar__btn--danger" id="btnReset">↺ 重置</button>
+    <span class="edit-toolbar__status" id="saveStatus"></span>
+    <input type="file" class="hidden-input" id="importFile" accept=".json">
+  </div>
+
+  <!-- Nav -->
+  <nav class="nav">
+    <div class="container">
+      <a href="#" class="nav__logo" data-editable data-key="siteName">Studio.</a>
+      <ul class="nav__links" id="navLinks">
+        <li><a href="#home" class="active" data-editable data-key="navHome">Home</a></li>
+        <li><a href="#gallery" data-editable data-key="navGallery">Works</a></li>
+        <li><a href="#about" data-editable data-key="navAbout">About</a></li>
+        <li><a href="#contact" data-editable data-key="navContact">Contact</a></li>
+      </ul>
+      <button class="nav__toggle" id="navToggle" aria-label="Menu"><span></span><span></span><span></span></button>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <section class="hero section" id="home">
+    <div class="hero__bg" data-editable-img data-key="heroBg">
+      <div class="upload-overlay"><span class="upload-icon">🖼</span><span>点击上传背景图/视频</span></div>
+      <button class="delete-btn" data-delete="heroBg">✕</button>
+    </div>
+    <div class="hero__overlay"></div>
+    <div class="container">
+      <h1 class="hero__title" data-editable data-key="heroTitle" data-placeholder="你的名字">Artist Name</h1>
+      <p class="hero__sub" data-editable data-key="heroSub" data-placeholder="你的头衔/标语">Photographer / Visual Designer</p>
+    </div>
+  </section>
+
+  <!-- Gallery -->
+  <section class="gallery section" id="gallery">
+    <!-- Tabs -->
+    <div class="gallery-tabs">
+      <button class="gallery-tab active" data-tab="photos">🖼 图片</button>
+      <button class="gallery-tab" data-tab="videos">🎬 视频</button>
+      <button class="gallery-tab" data-tab="docs">📄 文档</button>
+    </div>
+
+    <!-- Edit bar -->
+    <div class="gallery-edit-bar" id="galleryEditBar">
+      <button id="btnAddPhotoGrid">＋ 图片</button>
+      <button id="btnAddVideoGrid">＋ 视频</button>
+      <button id="btnAddDocGrid" style="color:#a78bfa;border-color:rgba(167,139,250,.2);">＋ PDF文档</button>
+      <span class="hint" id="galleryHint">点击图片在灯箱中查看 &nbsp;|&nbsp; 编辑模式下可修改标题</span>
+      <span style="font-size:.75rem;color:var(--text-dim);font-family:var(--font-mono);margin-left:auto;">
+        <span id="galleryCount">0</span> 件
+      </span>
+    </div>
+
+    <!-- Grid (shared for photos/videos/docs) -->
+    <div class="gallery-grid" id="galleryGrid"></div>
+  </section>
+
+  <!-- Lightbox (for photos/videos) -->
+  <div class="lightbox" id="lightbox">
+    <button class="lightbox__close" id="lightboxClose">✕</button>
+    <button class="lightbox__arrow lightbox__arrow--prev" id="lightboxPrev">◂</button>
+    <button class="lightbox__arrow lightbox__arrow--next" id="lightboxNext">▸</button>
+    <div class="lightbox__content" id="lightboxContent"></div>
+    <div class="lightbox__info" id="lightboxInfo"><h3></h3><p></p></div>
+    <div class="photo-exif-panel" id="exifPanel">
+      <div class="exif-row" id="exifRow"></div>
+      <div class="color-swatches" id="colorSwatches"></div>
+    </div>
+    <div class="lightbox__counter" id="lightboxCounter"></div>
+  </div>
+
+  <!-- Document Viewer -->
+  <div class="doc-viewer" id="docViewer">
+    <div class="doc-viewer__header">
+      <button class="doc-viewer__close" id="docViewerClose">✕</button>
+      <h3 id="docViewerTitle" data-editable-doc data-key="docTitle">Document Title</h3>
+      <div class="doc-viewer__controls">
+        <button class="doc-viewer__mode-btn active" data-doc-mode="original">原版</button>
+        <button class="doc-viewer__mode-btn" data-doc-mode="formatted">整理版</button>
+      </div>
+      <span class="page-badge" id="docViewerBadge">0 页</span>
+    </div>
+    <div class="doc-viewer__wrap">
+      <!-- TOC Sidebar -->
+      <nav class="doc-toc" id="docToc">
+        <div class="doc-toc__title">目录</div>
+        <div id="docTocList"></div>
+      </nav>
+      <!-- Body -->
+      <div class="doc-viewer__body" id="docViewerBody"></div>
+      <!-- Formatted content -->
+      <div class="doc-content" id="docContent" style="display:none;">
+        <div class="doc-content__inner" id="docContentInner">
+          <div class="doc-content__loading">正在提取分析内容...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Upload Progress -->
+  <div class="upload-progress" id="uploadProgress">
+    <span>📄 正在解析 PDF...</span>
+    <div class="upload-progress__bar"><div class="upload-progress__fill" id="progressFill" style="width:0%"></div></div>
+    <div class="upload-progress__text" id="progressText">准备中...</div>
+  </div>
+
+  <!-- About -->
+  <section class="about section" id="about">
+    <div class="container">
+      <h2 data-editable data-key="aboutTitle" data-placeholder="关于我">About Me</h2>
+      <div class="about__grid">
+        <div class="about__text">
+          <p data-editable data-key="aboutText1" data-placeholder="自我介绍...">我是一名专注于视觉传达的摄影师和设计师。作品涵盖时尚摄影、品牌视觉设计和数字艺术创作。</p>
+          <p data-editable data-key="aboutText2" data-placeholder="继续写...">毕业于中央美术学院视觉传达专业，作品曾在多个国际展览中展出。</p>
+          <p data-editable data-key="aboutText3" data-placeholder="继续写...">目前常驻上海，接受商业拍摄和品牌设计项目合作。</p>
+        </div>
+        <div class="about__img" data-editable-img data-key="aboutImg">
+          <div class="about__img-placeholder">点击上传照片</div>
+          <div class="upload-overlay"><span class="upload-icon">🖼</span><span>点击上传</span></div>
+          <button class="delete-btn" data-delete="aboutImg">✕</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Contact -->
+  <section class="contact section" id="contact">
+    <div class="container">
+      <h2 data-editable data-key="contactTitle" data-placeholder="联系方式">Contact</h2>
+      <div class="contact__grid">
+        <p class="contact__desc" data-editable data-key="contactDesc" data-placeholder="联系描述...">欢迎合作与项目咨询。<br>可通过以下方式联系我。</p>
+        <div class="contact__list" id="contactList">
+          <div class="contact__item"><span class="icon">✉</span><span data-editable data-key="contactEmail">hello@artist.com</span><span data-editable-url data-key="contactEmail_url" style="display:none;">mailto:hello@artist.com</span></div>
+          <div class="contact__item"><span class="icon">📷</span><span data-editable data-key="contactIg">@artist_handle</span><span data-editable-url data-key="contactIg_url" style="display:none;">https://instagram.com/artist_handle</span></div>
+          <div class="contact__item"><span class="icon">🎨</span><span data-editable data-key="contactBe">Behance</span><span data-editable-url data-key="contactBe_url" style="display:none;">https://behance.net/artist</span></div>
+          <div class="contact__item"><span class="icon">💬</span><span data-editable data-key="contactWx">WeChat: artist_wechat</span><span data-editable-url data-key="contactWx_url" style="display:none;">weixin://</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <p>&copy; 2026 <span data-editable data-key="siteName">Studio.</span>
+        &nbsp;·&nbsp; <span class="admin-link" id="adminLink">🔑 管理</span>
+      </p>
+    </div>
+  </footer>
+
+  <!-- Password Modal -->
+  <div class="pw-modal" id="pwModal">
+    <div class="pw-modal__box">
+      <h3>🔑 管理登录</h3>
+      <p id="pwModalMsg">输入密码以开启编辑功能</p>
+      <input type="password" id="pwInput" placeholder="输入密码" autocomplete="off">
+      <button id="pwSubmit">验证</button>
+      <div class="pw-hint" id="pwHint"></div>
+    </div>
+  </div>
+
+  <!-- Edit Toggle -->
+  <button class="edit-toggle" id="editToggle" title="切换编辑模式">✎</button>
+
+  <!-- Hidden inputs -->
+  <input type="file" class="hidden-input" id="heroBgInput" accept="image/*,video/*">
+  <input type="file" class="hidden-input" id="aboutImgInput" accept="image/*,video/*">
+  <input type="file" class="hidden-input" id="slideMediaInput" accept="image/*,video/*">
+  <input type="file" class="hidden-input" id="pdfInput" accept=".pdf,.doc,.docx">
+
+  <!-- PDF.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
