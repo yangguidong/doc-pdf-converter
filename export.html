@@ -11,8 +11,8 @@
   p{color:#7a7a8a;margin-bottom:24px;font-size:.88rem;text-align:center}
   .card{background:#111118;border:1px solid rgba(255,255,255,.05);border-radius:16px;padding:32px;max-width:500px;width:100%;text-align:center}
   button{padding:12px 28px;border-radius:8px;font-size:.9rem;font-weight:600;cursor:pointer;border:none;transition:all .2s;margin:6px}
-  .btn-export{background:linear-gradient(135deg,#a78bfa,#7c3aed);color:#fff}
-  .btn-export:hover{box-shadow:0 4px 20px rgba(167,139,250,.3)}
+  .btn-export{background:linear-gradient(135deg,#34d399,#059669);color:#fff}
+  .btn-export:hover{box-shadow:0 4px 20px rgba(52,211,153,.3)}
   .btn-media{background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.2);color:#60a5fa}
   .btn-media:hover{background:rgba(59,130,246,.2)}
   .log{background:rgba(0,0,0,.3);border-radius:8px;padding:16px;margin-top:20px;max-height:200px;overflow-y:auto;font-family:'JetBrains Mono',monospace;font-size:.7rem;color:#7a7a8a;text-align:left;display:none}
@@ -21,18 +21,18 @@
   .log .warn{color:#fbbf24}
   .progress{height:4px;background:rgba(255,255,255,.04);border-radius:2px;margin-top:16px;overflow:hidden;display:none}
   .progress.show{display:block}
-  .progress-bar{height:100%;background:linear-gradient(90deg,#a78bfa,#f472b6);border-radius:2px;width:0%;transition:width .3s}
+  .progress-bar{height:100%;background:linear-gradient(90deg,#34d399,#059669);border-radius:2px;width:0%;transition:width .3s}
   .info{color:#fbbf24;font-size:.75rem;margin-top:16px}
 </style>
 </head>
 <body>
 <div class="card">
   <h1>📦 导出部署文件</h1>
-  <p>将浏览器中所有作品数据导出为静态文件，用于部署到 GitHub Pages</p>
+  <p>将浏览器中所有作品数据导出为静态文件</p>
 
-  <button class="btn-export" onclick="exportData()">📋 导出 data.js（元数据 + 图片）</button>
+  <button class="btn-export" onclick="exportAll()">📋 一键导出 data.js</button>
   <br>
-  <button class="btn-media" onclick="exportMedia()">🎬 单独导出视频文件</button>
+  <button class="btn-media" onclick="exportAllMedia()">📁 导出所有媒体文件</button>
 
   <div class="progress" id="progress"><div class="progress-bar" id="progressBar"></div></div>
   <div class="log" id="log"></div>
@@ -47,45 +47,6 @@ async function dbGet(k){const db=await odb();return new Promise(ok=>{const t=db.
 function log(msg,cls){const l=document.getElementById('log');l.classList.add('show');l.innerHTML+='<span class="'+cls+'">'+msg+'</span>\n';l.scrollTop=l.scrollHeight}
 function setProgress(pct){document.getElementById('progress').classList.add('show');document.getElementById('progressBar').style.width=pct+'%'}
 
-async function exportData(){
-  const raw=localStorage.getItem('pf_data2');if(!raw){alert('没有找到数据，请先在主站点上传作品');return}
-  const data=JSON.parse(raw);
-  document.getElementById('info').textContent='';
-  log('开始导出...','ok');
-  setProgress(5);
-
-  // Collect all media keys
-  const keys=new Set(data.mediaKeys||[]);
-  (data.photos||[]).forEach(x=>{(x.imgs&&x.imgs.length?x.imgs:[x.id]).forEach(k=>keys.add(k))});
-  (data.videos||[]).forEach(x=>{keys.add(x.id);if(x.thumbKey)keys.add(x.thumbKey)});
-
-  log('找到 '+keys.size+' 个媒体文件','ok');
-
-  const exportData=JSON.parse(JSON.stringify(data));
-  let embedded=0,skipped=0,total=keys.size,processed=0;
-
-  for(const k of keys){
-    const blob=await dbGet(k);processed++;
-    setProgress(5+Math.floor(processed/total*90));
-    if(!blob){skipped++;continue}
-    if(blob.size>800000){skipped++;continue} // Skip files > 800KB for embedded
-    const b64=await new Promise(ok=>{const r=new FileReader();r.onload=()=>ok(r.result.split(',')[1]);r.readAsDataURL(blob)});
-    exportData['_m_'+k]={type:blob.type,data:b64,size:blob.size};
-    embedded++;
-  }
-
-  log('嵌入 '+embedded+' 个小文件（图片/缩略图）','ok');
-  if(skipped>0)log(skipped+' 个大文件（视频等）跳过嵌入，请单独导出','warn');
-
-  // Download data.js
-  const js='window.__PRELOAD__='+JSON.stringify(exportData)+';';
-  download(js,'data.js','application/javascript');
-  log('✅ data.js 已下载','ok');
-  setProgress(100);
-
-  if(skipped>0){document.getElementById('info').innerHTML='⚠️ 视频文件请点击下方按钮单独导出，保存到 uploads/ 文件夹'}
-}
-
 function download(content,filename,mime){
   const a=document.createElement('a');
   a.href=URL.createObjectURL(new Blob([content],{type:mime}));
@@ -94,35 +55,50 @@ function download(content,filename,mime){
   URL.revokeObjectURL(a.href);
 }
 
-async function exportMedia(){
+// Export metadata-only data.js (no embedded images, super small)
+async function exportAll(){
+  const raw=localStorage.getItem('pf_data2');if(!raw){alert('没有找到数据');return}
+  const data=JSON.parse(raw);
+  log('导出纯数据（不含图片）...','ok');
+  const clean=JSON.parse(JSON.stringify(data));
+  // Remove any old embedded media keys
+  Object.keys(clean).forEach(k=>{if(k.startsWith('_m_'))delete clean[k]});
+  clean.mediaKeys=[];
+  const js='window.__PRELOAD__='+JSON.stringify(clean)+';';
+  download(js,'data.js','application/javascript');
+  log('✅ data.js 已下载（'+(js.length/1024).toFixed(1)+'KB）','ok');
+  document.getElementById('info').innerHTML='⚠️ 还需点击下方按钮导出所有媒体文件到 uploads/ 文件夹';
+  setProgress(100);
+}
+
+// Export ALL media files (images + videos) as actual files
+async function exportAllMedia(){
   const raw=localStorage.getItem('pf_data2');if(!raw){alert('没有数据');return}
   const data=JSON.parse(raw);
-  log('导出视频/大文件...','ok');
+  log('正在导出所有媒体文件...','ok');
   setProgress(0);
 
-  const keys=new Set(data.mediaKeys||[]);
+  const keys=new Set();
   (data.photos||[]).forEach(x=>{(x.imgs&&x.imgs.length?x.imgs:[x.id]).forEach(k=>keys.add(k))});
   (data.videos||[]).forEach(x=>{keys.add(x.id);if(x.thumbKey)keys.add(x.thumbKey)});
 
-  let downloaded=0,total=keys.size,processed=0;
+  let done=0,total=keys.size;
   for(const k of keys){
-    processed++;setProgress(Math.floor(processed/total*95));
+    done++;setProgress(Math.floor(done/total*95));
     const blob=await dbGet(k);if(!blob)continue;
-    if(blob.size<=800000)continue; // Skip small files already embedded
     const ext=blob.type.split('/')[1]||'bin';
     const a=document.createElement('a');
     a.href=URL.createObjectURL(blob);
     a.download=k+'.'+ext;
     a.click();
     URL.revokeObjectURL(a.href);
-    downloaded++;
-    log('下载: '+k+'.'+ext+' ('+(blob.size/1024/1024).toFixed(1)+'MB)','ok');
-    await new Promise(r=>setTimeout(r,300)); // Delay between downloads
+    log('下载: '+k+'.'+ext+' ('+(blob.size/1024).toFixed(0)+'B)','ok');
+    await new Promise(r=>setTimeout(r,200));
   }
 
   setProgress(100);
-  log('✅ '+downloaded+' 个文件已下载','ok');
-  document.getElementById('info').textContent='将所有下载的文件放入项目的 uploads/ 文件夹';
+  log('✅ '+done+'/'+total+' 个文件已下载','ok');
+  document.getElementById('info').textContent='将所有下载的文件放入项目的 uploads/ 文件夹，然后替换 data.js';
 }
 </script>
 </body>

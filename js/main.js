@@ -85,14 +85,14 @@ function renderCard(item,grid){
   grid.appendChild(wrap)
 }
 
-async function loadMedia(){const raw=items();for(const item of raw){const ck=(item.imgs&&item.imgs.length)?item.imgs[0]:item.id;const blob=await dbGet(ck);let url;if(blob){url=URL.createObjectURL(blob)}else if(item.type==='video'){url='uploads/'+item.id+'.mp4'}else{continue}const card=document.querySelector('.card[data-id="'+item.id+'"]');if(!card)continue;const ph=card.querySelector('.card__ph');if(ph)ph.remove();const old=card.querySelector('img,video');if(old)old.remove();const el=document.createElement(item.type==='video'?'video':'img');el.src=url;if(item.type==='video'){el.muted=true;el.playsInline=true;el.preload='metadata'}el.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none';card.insertBefore(el,card.firstChild)}}
+async function loadMedia(){const raw=items();for(const item of raw){const ck=(item.imgs&&item.imgs.length)?item.imgs[0]:item.id;let blob=await dbGet(ck);let url;if(blob){url=URL.createObjectURL(blob)}else{url='uploads/'+ck+(item.type==='video'?'.mp4':'.jpg')}const card=document.querySelector('.card[data-id="'+item.id+'"]');if(!card)continue;const ph=card.querySelector('.card__ph');if(ph)ph.remove();const old=card.querySelector('img,video');if(old)old.remove();const el=document.createElement(item.type==='video'?'video':'img');el.src=url;if(item.type==='video'){el.muted=true;el.playsInline=true;el.preload='metadata'}el.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none';card.insertBefore(el,card.firstChild)}}
 
 // === Stack Viewer ===
 async function openStack(item){stackItem=item;renderStack();stack.classList.add('open');document.body.style.overflow='hidden'}
 async function renderStack(){if(!stackItem)return;stackB.innerHTML='';const imgs=(stackItem.imgs&&stackItem.imgs.length)?stackItem.imgs:[stackItem.id];stackCnt.textContent=imgs.length+' 张';
   for(let j=0;j<imgs.length;j++){const key=imgs[j];
     if(edit){const ins=document.createElement('div');ins.className='stack-insert';ins.innerHTML='<span>+</span> Insert';ins.addEventListener('click',()=>{if(!stackItem.imgs)stackItem.imgs=[stackItem.id];const nk=stackItem.id+'_'+Date.now();stackItem.imgs.splice(j,0,nk);if(!data.mediaKeys.includes(nk))data.mediaKeys.push(nk);pKey=nk;save();pick('image/*',true,handleStackAdd)});stackB.appendChild(ins)}
-    const wrap=document.createElement('div');wrap.className='stack-img-wrap';const blob=await dbGet(key);let imgUrl;if(blob){imgUrl=URL.createObjectURL(blob)}else if(key.startsWith('v_')){imgUrl='uploads/'+key+'.mp4'}if(imgUrl&&!key.startsWith('v_')){const img=document.createElement('img');img.src=imgUrl;wrap.appendChild(img)}else if(imgUrl){const vid=document.createElement('video');vid.src=imgUrl;vid.controls=true;vid.playsInline=true;vid.preload='metadata';vid.style.cssText='max-width:60%;border-radius:2px;box-shadow:0 4px 30px rgba(0,0,0,.5)';wrap.appendChild(vid)}else{wrap.innerHTML='<div style="display:inline-block;aspect-ratio:4/3;min-width:200px;background:var(--s);color:var(--td);font-size:.7rem;padding:40px;">No Media</div>'}
+    const wrap=document.createElement('div');wrap.className='stack-img-wrap';const blob=await dbGet(key);let imgUrl;if(blob){imgUrl=URL.createObjectURL(blob)}else if(key.startsWith('v_')){imgUrl='uploads/'+key+'.mp4'}else{imgUrl='uploads/'+key+'.jpg'}if(imgUrl&&!key.startsWith('v_')){const img=document.createElement('img');img.src=imgUrl;wrap.appendChild(img)}else if(imgUrl){const vid=document.createElement('video');vid.src=imgUrl;vid.controls=true;vid.playsInline=true;vid.preload='metadata';vid.style.cssText='max-width:60%;border-radius:2px;box-shadow:0 4px 30px rgba(0,0,0,.5)';wrap.appendChild(vid)}else{wrap.innerHTML='<div style="display:inline-block;aspect-ratio:4/3;min-width:200px;background:var(--s);color:var(--td);font-size:.7rem;padding:40px;">No Media</div>'}
     if(edit){const d=document.createElement('button');d.className='stack-img-del';d.textContent='x';d.addEventListener('click',e=>{e.stopPropagation();removeStackImg(j)});wrap.appendChild(d);const r=document.createElement('button');r.className='stack-img-rep';r.textContent='↻';r.addEventListener('click',e=>{e.stopPropagation();pKey=key;pick('image/*',false,handleReplaceOne)});wrap.appendChild(r)}
     stackB.appendChild(wrap)}
   if(edit){const ins=document.createElement('div');ins.className='stack-insert';ins.innerHTML='<span>+</span> Add More';ins.addEventListener('click',()=>{pKey=stackItem.id;pick('image/*',true,handleStackAdd)});stackB.appendChild(ins)}
@@ -103,7 +103,7 @@ async function removeStackImg(j){if(!stackItem)return;const imgs=stackItem.imgs&
 
 // === Lightbox ===
 function openLb(i){const all=items();if(!all.length)return;lbIdx=i;showLb();lbox.classList.add('open');document.body.style.overflow='hidden'}
-async function showLb(){const item=items()[lbIdx];if(!item)return;lbInfo.querySelector('h3').textContent=item.title||'';lbInfo.querySelector('p').textContent=item.desc||'';lbCnt.textContent=(lbIdx+1)+' / '+items().length;const blob=await dbGet(item.id);let url=blob?URL.createObjectURL(blob):(item.type==='video'?'uploads/'+item.id+'.mp4':null);if(!url){lbCont.innerHTML='<span style="color:var(--td)">No media</span>';return}if(item.type==='video'){lbCont.innerHTML='<video src="'+url+'" controls autoplay playsinline style="max-width:92vw;max-height:85vh;border-radius:4px;"></video>'}else{lbCont.innerHTML='<img src="'+url+'" alt="">'}}
+async function showLb(){const item=items()[lbIdx];if(!item)return;lbInfo.querySelector('h3').textContent=item.title||'';lbInfo.querySelector('p').textContent=item.desc||'';lbCnt.textContent=(lbIdx+1)+' / '+items().length;const blob=await dbGet(item.id);let url=blob?URL.createObjectURL(blob):'uploads/'+item.id+(item.type==='video'?'.mp4':'.jpg');if(!url){lbCont.innerHTML='<span style="color:var(--td)">No media</span>';return}if(item.type==='video'){lbCont.innerHTML='<video src="'+url+'" controls autoplay playsinline style="max-width:92vw;max-height:85vh;border-radius:4px;"></video>'}else{lbCont.innerHTML='<img src="'+url+'" alt="">'}}
 function closeLb(){lbox.classList.remove('open');lbCont.innerHTML='';document.body.style.overflow=''}
 document.getElementById('lbClose').addEventListener('click',closeLb);document.getElementById('lbPrev').addEventListener('click',()=>{const all=items();lbIdx=((lbIdx-1)%all.length+all.length)%all.length;showLb()});document.getElementById('lbNext').addEventListener('click',()=>{const all=items();lbIdx=(lbIdx+1)%all.length;showLb()});lbox.addEventListener('click',e=>{if(e.target===lbox)closeLb()});
 
@@ -330,26 +330,14 @@ const esc=s=>{const d=document.createElement('div');d.textContent=s||'';return d
 
 // === Preload from data.js ===
 async function preloadIfEmpty(){
-  if(localStorage.getItem('pf_data2'))return false; // Already have data
+  if(localStorage.getItem('pf_data2'))return false;
   if(!window.__PRELOAD__)return false;
   try{
     const d=JSON.parse(JSON.stringify(window.__PRELOAD__));
-    // Restore media to IndexedDB
-    const nk=[];
-    for(const k of Object.keys(d)){
-      if(k.startsWith('_m_')){
-        const mk=k.slice(3);const{type,data:b64}=d[k];
-        const bin=atob(b64);const bytes=new Uint8Array(bin.length);
-        for(let i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i);
-        await dbSet(mk,new Blob([bytes],{type}));nk.push(mk);delete d[k];
-      }
-    }
-    d.mediaKeys=nk;
     if(!d.photos)d.photos=[];if(!d.videos)d.videos=[];
-    if(!d.photoCats||!d.photoCats.length)d.photoCats=['环艺作品','平面设计作品','AIGC作品','品牌设计','UI/UX设计','插画作品','摄影作品','包装设计','C4D/3D','其他'];
-    if(!d.videoCats||!d.videoCats.length)d.videoCats=['品牌广告','产品动画','Motion设计','3D短片','宣传片','纪录片','短视频','其他'];
-    if(!d.profile)d.profile={name:'张伟',title:'摄影师 / 视觉艺术家',bio:''};
+    if(!d.profile)d.profile={name:'杨贵东',title:'设计师',bio:''};
     if(!d.workExperience)d.workExperience=[];if(!d.education)d.education=[];
+    if(!d.mediaKeys)d.mediaKeys=[];
     localStorage.setItem('pf_data2',JSON.stringify(d));
     return true;
   }catch(e){console.error('Preload failed:',e);return false}
