@@ -105,7 +105,7 @@ async function loadCardMedia(card){
   const ph=card.querySelector('.card__ph');if(ph)ph.remove();
   const el=document.createElement(item.type==='video'?'video':'img');
   el.src=url;el.loading='lazy';
-  if(item.type==='video'){el.muted=true;el.playsInline=true;el.preload='none';el.setAttribute('playsinline','');el.setAttribute('webkit-playsinline','');el.style.background='#000'}
+  if(item.type==='video'){el.muted=true;el.playsInline=true;el.preload='none';el.setAttribute('playsinline','');el.setAttribute('webkit-playsinline','');el.setAttribute('poster','uploads/thumb_'+item.id+'.jpg');el.style.background='#000'}
   el.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none';
   el.onerror=function(){if(this.tagName==='IMG'){this.src=this.src.replace('.jpg','.jpeg');this.onerror=function(){this.src=this.src.replace('.jpeg','.png')}}};
   card.insertBefore(el,card.firstChild)
