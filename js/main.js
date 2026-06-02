@@ -26,7 +26,7 @@ function items(){const raw=tab==='photos'?(data.photos||[]):(data.videos||[]);re
 function cats(){return tab==='photos'?(data.photoCats||[]):(data.videoCats||[])}
 function idx(item){return items().indexOf(item)}
 
-function applyText(){document.querySelectorAll('[data-key]').forEach(el=>{const k=el.getAttribute('data-key');if(data[k]!==undefined&&document.activeElement!==el)el.textContent=data[k]});renderAbout()}
+function applyText(){document.querySelectorAll('[data-key]').forEach(el=>{const k=el.getAttribute('data-key');if(k==='heroSub')return;if(data[k]!==undefined&&document.activeElement!==el)el.textContent=data[k]});renderAbout()}
 
 // === Auth ===
 const pwModal=document.getElementById('pwModal'),pwInput=document.getElementById('pwInput'),pwHint=document.getElementById('pwHint'),adminLink=document.getElementById('adminLink'),editFab=document.getElementById('editFab'),editBar=document.getElementById('editBar');
@@ -41,7 +41,7 @@ pwInput.addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementByI
 pwModal.addEventListener('click',e=>{if(e.target===pwModal)closePw()})
 
 // === Edit ===
-function toggleEdit(){edit=!edit;if(edit){document.body.classList.add('edit');editFab.classList.add('active');editFab.innerHTML='&#10005;';editBar.style.display='flex';if(document.getElementById('catEditBar'))document.getElementById('catEditBar').style.display='block'}else{document.body.classList.remove('edit');editFab.classList.remove('active');editFab.innerHTML='&#9998;';editBar.style.display='none';if(document.getElementById('catEditBar'))document.getElementById('catEditBar').style.display='none'}document.querySelectorAll('[data-editable]').forEach(el=>{el.contentEditable=edit?'true':'false';el.setAttribute('spellcheck','false')});setAboutEditable(edit);render()}
+function toggleEdit(){edit=!edit;if(edit){document.body.classList.add('edit');editFab.classList.add('active');editFab.innerHTML='&#10005;';editBar.style.display='flex';if(document.getElementById('catEditBar'))document.getElementById('catEditBar').style.display='block'}else{document.body.classList.remove('edit');editFab.classList.remove('active');editFab.innerHTML='&#9998;';editBar.style.display='none';if(document.getElementById('catEditBar'))document.getElementById('catEditBar').style.display='none'}document.querySelectorAll('[data-editable]').forEach(el=>{el.contentEditable=edit?'true':'false';el.setAttribute('spellcheck','false')});setAboutEditable(edit);render();if(typingTimer){clearTimeout(typingTimer);initTypingText()}}
 editFab.addEventListener('click',()=>{if(!auth&&localStorage.getItem('pf_pw')){openPw();return}toggleEdit()})
 document.addEventListener('input',e=>{if(!edit)return;const el=e.target.closest('[data-key]');if(!el)return;data[el.getAttribute('data-key')]=el.textContent;ds()})
 
@@ -331,12 +331,12 @@ const esc=s=>{const d=document.createElement('div');d.textContent=s||'';return d
 
 // === Preload from data.js ===
 async function preloadIfEmpty(){
-  if(localStorage.getItem('pf_data2'))return false;
+  if(localStorage.getItem('pf_data2'))return false; // Already have data
   if(!window.__PRELOAD__)return false;
   try{
     const d=JSON.parse(JSON.stringify(window.__PRELOAD__));
+    // Restore media to IndexedDB
     const nk=[];
-    // Restore embedded media from data.js
     for(const k of Object.keys(d)){
       if(k.startsWith('_m_')){
         const mk=k.slice(3);const{type,data:b64}=d[k];
@@ -344,15 +344,6 @@ async function preloadIfEmpty(){
         for(let i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i);
         await dbSet(mk,new Blob([bytes],{type}));nk.push(mk);delete d[k];
       }
-    }
-    // Fetch external video files from uploads/ folder
-    const allKeys=new Set(d.mediaKeys||[]);
-    (d.photos||[]).forEach(x=>{(x.imgs&&x.imgs.length?x.imgs:[x.id]).forEach(k=>allKeys.add(k))});
-    (d.videos||[]).forEach(x=>{allKeys.add(x.id);if(x.thumbKey)allKeys.add(x.thumbKey)});
-    for(const k of allKeys){
-      if(nk.includes(k))continue; // Already restored
-      const ext=k.startsWith('v_')?'.mp4':'.jpg';
-      try{const r=await fetch('uploads/'+k+ext);if(r.ok){const blob=await r.blob();await dbSet(k,blob);nk.push(k)}else{const r2=await fetch('uploads/'+k+'.webm');if(r2.ok){const blob=await r2.blob();await dbSet(k,blob);nk.push(k)}}}catch(e){}
     }
     d.mediaKeys=nk;
     if(!d.photos)d.photos=[];if(!d.videos)d.videos=[];
@@ -368,7 +359,7 @@ async function preloadIfEmpty(){
 // === Init ===
 async function init(){
   const preloaded=await preloadIfEmpty();
-  data=load();applyText();render();renderAbout();renderCatTags();initParticles();initScrollReveal();initDragDrop();initSearch();if(auth)showAu();if(!localStorage.getItem('pf_pw'))pwHint.textContent='设置密码后可保护编辑权限'
+  data=load();applyText();render();renderAbout();renderCatTags();initParticles();initScrollReveal();initDragDrop();initSearch();initTypingText();if(auth)showAu();if(!localStorage.getItem('pf_pw'))pwHint.textContent='设置密码后可保护编辑权限'
 }
 init();
 });
