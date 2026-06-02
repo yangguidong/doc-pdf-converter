@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>骂了么 - 沉浸式情绪释放</title>
+<style>
+:root{--bg:#1a1a1a;--red:#FF3860;--gold:#FFB800;--green:#00E676;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'PingFang SC','Microsoft YaHei',sans-serif;background:#000;overflow:hidden;touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;}
+
+/* SCREENS */
+.scr{position:fixed;top:0;left:0;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;transition:transform .35s,opacity .35s;}
+.scr.hidden{transform:translateY(30px);opacity:0;pointer-events:none;}
+
+/* === START === */
+#start-scr{justify-content:center;gap:14px;background:linear-gradient(180deg,#1A0A0A 0%,#2D1010 50%,#1A0A0A 100%);}
+.logo{font-size:44px;font-weight:900;color:var(--red);text-shadow:0 0 20px rgba(255,56,96,.5),3px 3px 0 #600;letter-spacing:6px;}
+.logo-sub{font-size:13px;color:#999;letter-spacing:3px;}
+.tag-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;}
+.tag{background:rgba(255,255,255,.06);border-radius:16px;padding:6px 14px;font-size:11px;color:#CCC;}
+.boss-row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;}
+.boss-opt{background:rgba(255,255,255,.04);border:2px solid #333;border-radius:18px;padding:14px 12px;cursor:pointer;text-align:center;transition:all .2s;width:80px;}
+.boss-opt:hover,.boss-opt.sel{border-color:var(--red);box-shadow:0 0 20px rgba(255,56,96,.25);transform:translateY(-3px);background:rgba(255,56,96,.08);}
+.boss-opt .bo-emoji{font-size:32px;display:block;}
+.boss-opt .bo-name{font-size:11px;color:#CCC;margin-top:4px;font-weight:600;}
+.boss-opt .bo-diff{font-size:10px;color:var(--red);}
+.boss-opt.locked{opacity:.35;pointer-events:none;}
+
+.btn{border:none;border-radius:50px;font-weight:700;cursor:pointer;transition:transform .15s,box-shadow .15s;letter-spacing:1px;}
+.btn:active{transform:scale(.94);}
+.btn-start{background:linear-gradient(135deg,#FF3860,#D32F2F);color:#FFF;padding:16px 50px;font-size:20px;box-shadow:0 6px 28px rgba(255,56,96,.4);}
+.btn-ghost{background:transparent;color:#888;border:1px solid #444;padding:10px 24px;font-size:13px;}
+.coin-row{display:flex;align-items:center;gap:6px;color:var(--gold);font-weight:700;font-size:14px;}
+
+/* === GAME === */
+#game-scr{overflow:hidden;}
+
+/* Office background */
+.office-bg{position:absolute;top:0;left:0;width:100%;height:100%;background:linear-gradient(180deg,#E8DCC8 0%,#D5C4A0 40%,#C4A882 100%);transition:filter .8s;}
+.office-bg.destroyed{filter:brightness(.6) saturate(.5);}
+.office-wall-art{position:absolute;top:3%;left:50%;transform:translateX(-50%);font-size:20px;opacity:.25;}
+.office-clock{position:absolute;top:4%;right:8%;font-size:18px;opacity:.3;}
+.office-shelf{position:absolute;top:5%;left:5%;font-size:16px;opacity:.2;display:flex;flex-direction:column;gap:2px;}
+/* Items flying around */
+.flying-item{position:absolute;font-size:24px;z-index:30;pointer-events:none;animation:fly-out .8s ease-out forwards;}
+@keyframes fly-out{0%{transform:translate(0,0) rotate(0);opacity:1}100%{transform:translate(var(--fx),var(--fy)) rotate(var(--fr));opacity:0}}
+
+/* Boss */
+.boss-container{position:absolute;top:8%;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;z-index:10;transition:transform .4s,filter .3s;}
+.boss-container.shaking{animation:boss-shake .15s infinite;}
+@keyframes boss-shake{0%,100%{transform:translateX(-50%) translate(0,0)}25%{transform:translateX(calc(-50% + 3px)) translateY(-2px)}50%{transform:translateX(calc(-50% - 2px)) translateY(2px)}75%{transform:translateX(calc(-50% + 1px)) translateY(-1px)}}
+.boss-container.recoil{animation:boss-recoil .4s ease-out;}
+@keyframes boss-recoil{0%{transform:translateX(-50%) translateY(0)}30%{transform:translateX(-50%) translateY(-30px) scale(.9)}100%{transform:translateX(-50%) translateY(0) scale(1)}}
+.boss-container.slap-left{animation:slap-l .5s ease-out;}
+@keyframes slap-l{0%{transform:translateX(-50%) rotate(0)}25%{transform:translateX(calc(-50% + 20px)) rotate(15deg)}60%{transform:translateX(calc(-50% - 5px)) rotate(-3deg)}100%{transform:translateX(-50%) rotate(0)}}
+.boss-container.slap-right{animation:slap-r .5s ease-out;}
+@keyframes slap-r{0%{transform:translateX(-50%) rotate(0)}25%{transform:translateX(calc(-50% - 20px)) rotate(-15deg)}60%{transform:translateX(calc(-50% + 5px)) rotate(3deg)}100%{transform:translateX(-50%) rotate(0)}}
+.boss-container.flipped{animation:flip-out .6s ease-out forwards;}
+@keyframes flip-out{0%{transform:translateX(-50%) scale(1)}40%{transform:translateX(-50%) scale(1.3) rotate(20deg)}100%{transform:translateX(-50%) translateY(200px) scale(.5) rotate(45deg);opacity:0}}
+
+/* Boss head */
+.boss-head{position:relative;width:140px;height:140px;background:radial-gradient(ellipse at 50% 40%,#FFECD2,#F0C8A0);border-radius:50%;box-shadow:0 8px 40px rgba(0,0,0,.25);transition:background .5s;}
+.boss-head.hurt{background:radial-gradient(ellipse at 50% 40%,#FFD0D0,#F0A0A0);}
+.boss-head.crying{background:radial-gradient(ellipse at 50% 40%,#FFE0E0,#F0B0B0);}
+
+/* Hair - receding */
+.boss-hair{position:absolute;top:-4px;left:50%;transform:translateX(-50%);width:100px;height:40px;background:#333;border-radius:50px 50px 0 0;transition:transform .3s;}
+.boss-hair.blown{transform:translateX(-50%) translateY(-8px) skewX(-10deg);}
+
+/* Eyes */
+.boss-eyes{position:absolute;top:42px;left:50%;transform:translateX(-50%);display:flex;gap:28px;}
+.boss-eye{width:28px;height:24px;background:#FFF;border-radius:50%;position:relative;overflow:hidden;border:2px solid #333;transition:all .15s;}
+.boss-eye .pupil{width:12px;height:12px;background:#111;border-radius:50%;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);transition:all .15s;}
+.boss-eye .pupil.big{width:18px;height:18px;}
+.boss-eye.squint{height:6px;border-radius:3px;margin-top:9px;}
+.boss-eye.shut{height:3px;border-radius:2px;margin-top:10px;background:#333;}
+
+/* Eyebrows */
+.boss-brows{position:absolute;top:30px;left:50%;transform:translateX(-50%);display:flex;gap:28px;}
+.boss-brow{width:24px;height:6px;background:#333;border-radius:3px;transition:all .2s;}
+.boss-brow.angry{transform:rotate(-15deg) translateY(-4px);}
+.boss-brow.angry.r{transform:rotate(15deg) translateY(-4px);}
+.boss-brow.scared{transform:rotate(10deg) translateY(6px);}
+.boss-brow.scared.r{transform:rotate(-10deg) translateY(6px);}
+
+/* Nose */
+.boss-nose{position:absolute;top:62px;left:50%;transform:translateX(-50%);width:16px;height:12px;background:#E0B898;border-radius:50%;}
+
+/* Mouth */
+.boss-mouth{position:absolute;bottom:28px;left:50%;transform:translateX(-50%);width:34px;height:10px;background:#C44;border-radius:0 0 18px 18px;transition:all .3s;}
+.boss-mouth.smirk{width:40px;height:6px;border-radius:0 0 10px 10px;background:#A33;}
+.boss-mouth.open{width:28px;height:22px;border-radius:50%;background:#600;}
+.boss-mouth.beg{width:38px;height:18px;border-radius:10px;background:#C44;}
+.boss-mouth.cry{width:30px;height:14px;border-radius:0 0 14px 14px;background:#A33;transform:translateX(-50%) rotate(180deg);}
+
+/* Cheeks */
+.boss-cheek{position:absolute;width:20px;height:14px;border-radius:50%;background:rgba(255,100,100,0);transition:background .3s;}
+.boss-cheek.l{top:70px;left:18px;}
+.boss-cheek.r{top:70px;right:18px;}
+.boss-cheek.slap{background:rgba(255,30,30,.6);width:28px;height:20px;}
+
+/* Slap mark */
+.slap-mark{position:absolute;width:34px;height:40px;border-radius:50%;background:rgba(255,0,0,.35);pointer-events:none;z-index:11;animation:mark-fade 1.5s ease-out forwards;}
+@keyframes mark-fade{0%{opacity:1;transform:scale(.6)}20%{opacity:1;transform:scale(1.1)}100%{opacity:0;transform:scale(1.4)}}
+.slap-mark.l{top:52px;left:8px;}
+.slap-mark.r{top:52px;right:8px;}
+
+/* Sweat */
+.sweat-drop{position:absolute;font-size:18px;z-index:12;pointer-events:none;animation:sweat-fall .9s ease-in forwards;}
+@keyframes sweat-fall{0%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(40px)}}
+.sweat-drop.l{top:20px;left:20px;}
+.sweat-drop.r{top:20px;right:20px;}
+.sweat-drop.c{top:10px;left:50%;}
+
+/* Boss body */
+.boss-body-wrap{width:70px;height:80px;margin-top:-6px;position:relative;}
+.boss-suit{width:100%;height:100%;background:linear-gradient(180deg,#3A3A4A,#2A2A38);border-radius:10px 10px 0 0;position:relative;}
+.boss-tie{position:absolute;top:8px;left:50%;transform:translateX(-50%);width:10px;height:40px;background:linear-gradient(180deg,#C00,#800);clip-path:polygon(50% 100%,30% 60%,30% 0,70% 0,70% 60%);}
+.boss-collar{position:absolute;top:0;left:50%;transform:translateX(-50%);width:40px;height:16px;background:#FFF;border-radius:0 0 6px 6px;}
+
+/* Desk */
+.desk-area{position:absolute;bottom:22%;left:5%;width:90%;height:14%;background:linear-gradient(180deg,#C49A6C,#A07848);border-radius:6px;box-shadow:0 4px 24px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;gap:16px;font-size:22px;transition:transform .3s;}
+.desk-area.slammed{animation:desk-slam .5s ease-out;}
+@keyframes desk-slam{0%,100%{transform:translateY(0)}30%{transform:translateY(8px)}}
+.desk-area.flipped{animation:desk-flip .7s ease-out forwards;}
+@keyframes desk-flip{0%{transform:rotate(0) translateY(0)}50%{transform:rotate(-15deg) translateY(-20px)}100%{transform:rotate(-30deg) translateY(-60px);opacity:.5}}
+
+/* Speech bubble */
+.speech{position:absolute;bottom:38%;left:50%;transform:translateX(-50%);background:rgba(255,255,255,.95);border-radius:16px 16px 16px 2px;padding:10px 16px;font-size:15px;font-weight:600;color:#222;max-width:80%;text-align:center;z-index:15;box-shadow:0 4px 16px rgba(0,0,0,.15);transition:opacity .3s;}
+
+/* Rage meter */
+.rage-wrap{position:absolute;bottom:14%;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:8px;z-index:20;}
+.rage-label{font-size:12px;font-weight:700;color:#FFF;text-shadow:0 0 6px rgba(255,0,0,.5);}
+.rage-track{width:200px;height:10px;background:rgba(255,255,255,.1);border-radius:5px;overflow:hidden;border:1px solid rgba(255,255,255,.15);}
+.rage-fill{height:100%;width:0%;border-radius:5px;background:linear-gradient(90deg,#FF9800,#F44336,#FF3860);transition:width .2s;box-shadow:0 0 10px rgba(255,56,96,.5);}
+.rage-fill.full{animation:rage-pulse .3s infinite;}
+@keyframes rage-pulse{0%,100%{filter:brightness(1)}50%{filter:brightness(1.5)}}
+
+/* HUD */
+.hud{position:absolute;top:0;left:0;width:100%;padding:10px 16px;display:flex;justify-content:space-between;z-index:30;font-size:13px;font-weight:700;}
+.hud-score{color:var(--gold);font-size:16px;}
+.hud-combo{color:var(--red);transition:transform .2s;}
+.hud-combo.pop{animation:pop .3s ease-out;}
+@keyframes pop{0%{transform:scale(1.8)}100%{transform:scale(1)}}
+.hud-hp{color:#FFF;}
+
+/* Attack buttons */
+.attacks{position:absolute;bottom:0;left:0;width:100%;padding:8px 10px 16px;display:flex;gap:8px;justify-content:center;align-items:flex-end;z-index:30;}
+.atk-btn{border:none;border-radius:50%;cursor:pointer;font-weight:900;color:#FFF;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:transform .1s,box-shadow .1s;position:relative;}
+.atk-btn:active{transform:scale(.88);}
+.atk-btn .atk-emoji{font-size:28px;}
+.atk-btn .atk-label{font-size:10px;margin-top:2px;letter-spacing:1px;}
+
+.atk-yell{width:76px;height:76px;background:radial-gradient(circle,#4FC3F7,#0288D1);box-shadow:0 4px 20px rgba(2,136,209,.4);font-size:12px;}
+.atk-yell:active{box-shadow:0 2px 30px rgba(2,136,209,.7);}
+.atk-slap{width:66px;height:66px;background:radial-gradient(circle,#FF8A65,#E64A19);box-shadow:0 4px 18px rgba(230,74,25,.4);}
+.atk-slap:active{box-shadow:0 2px 28px rgba(230,74,25,.7);}
+.atk-throw{width:62px;height:62px;background:radial-gradient(circle,#81C784,#388E3C);box-shadow:0 4px 16px rgba(56,142,60,.4);}
+.atk-throw:active{box-shadow:0 2px 26px rgba(56,142,60,.7);}
+.atk-flip{width:72px;height:72px;background:radial-gradient(circle,#FFD740,#FF8F00);box-shadow:0 4px 22px rgba(255,143,0,.5);animation:pulse-flip 2s infinite;}
+@keyframes pulse-flip{0%,100%{box-shadow:0 4px 22px rgba(255,143,0,.5)}50%{box-shadow:0 6px 36px rgba(255,143,0,.8)}}
+.atk-flip:disabled{opacity:.35;animation:none;pointer-events:none;}
+
+/* Scream overlay */
+.scream-overlay{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:50;display:flex;align-items:center;justify-content:center;}
+.scream-wave{position:absolute;border-radius:50%;border:4px solid rgba(79,195,247,.6);animation:scream-expand .6s ease-out forwards;}
+@keyframes scream-expand{0%{width:40px;height:40px;opacity:1}100%{width:400px;height:400px;opacity:0}}
+
+/* Punch impact */
+.impact-star{position:absolute;pointer-events:none;z-index:40;font-size:28px;animation:impact-pop .5s ease-out forwards;}
+@keyframes impact-pop{0%{transform:scale(0) rotate(0);opacity:1}60%{transform:scale(1.5) rotate(90deg);opacity:1}100%{transform:scale(2) rotate(180deg);opacity:0}}
+
+/* Result */
+.result-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.85);z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;}
+.result-overlay.hidden{display:none;}
+.res-emoji{font-size:72px;animation:res-bounce .5s ease-out;}
+@keyframes res-bounce{0%{transform:scale(.2)}60%{transform:scale(1.2)}100%{transform:scale(1)}}
+.res-title{font-size:30px;font-weight:900;color:#FFF;}
+.res-detail{font-size:14px;color:#CCC;text-align:center;line-height:1.8;}
+.res-coins{font-size:18px;color:var(--gold);font-weight:900;}
+
+/* Floating damage */
+.dmg-num{position:fixed;pointer-events:none;z-index:60;font-weight:900;font-size:22px;animation:dmg-fly .8s ease-out forwards;}
+@keyframes dmg-fly{0%{transform:translateY(0) scale(.5);opacity:1}30%{transform:translateY(-20px) scale(1.3);opacity:1}100%{transform:translateY(-70px) scale(.7);opacity:0}}
+
+/* Blood/spit particles */
+.particle-box{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:55;}
+.fx-particle{position:absolute;font-size:14px;animation:fx-fly .6s ease-out forwards;pointer-events:none;}
+@keyframes fx-fly{0%{transform:translate(0,0) scale(1);opacity:1}100%{transform:translate(var(--px),var(--py)) scale(0);opacity:0}}
+
+/* Screen flash */
+.flash{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:45;opacity:0;transition:opacity .08s;}
+.flash.red{background:rgba(255,0,0,.25);}
+.flash.white{background:rgba(255,255,255,.3);}
+.flash.gold{background:rgba(255,200,0,.3);}
+
+/* Toast */
+.toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:200;font-weight:900;font-size:24px;pointer-events:none;animation:toast-in .3s ease-out,toast-out .3s 1.2s ease-in forwards;white-space:nowrap;}
+@keyframes toast-in{from{transform:translateX(-50%) translateY(-30px);opacity:0}}
+@keyframes toast-out{to{transform:translateX(-50%) translateY(-30px);opacity:0}}
+
+@media(min-width:500px){
+  .boss-head{width:170px;height:170px;}
+  .boss-eyes{top:50px;gap:34px;}
+  .boss-brows{top:36px;gap:34px;}
+  .boss-nose{top:74px;}
+  .boss-mouth{bottom:34px;}
+  .boss-cheek.l{top:84px;left:22px;}.boss-cheek.r{top:84px;right:22px;}
+  .boss-hair{width:120px;height:46px;}
+  .attacks{gap:12px;}
+  .atk-yell{width:86px;height:86px;}
+  .atk-slap{width:74px;height:74px;}
+  .atk-throw{width:70px;height:70px;}
+  .atk-flip{width:80px;height:80px;}
+  .rage-track{width:260px;}
+}
+</style>
+</head>
+<body>
+
+<!-- START SCREEN -->
+<div id="start-scr" class="scr">
+  <div style="font-size:60px;">👊💢👨‍💼</div>
+  <div class="logo">骂 了 么</div>
+  <div class="logo-sub">— 沉浸式情绪释放 · 切身发泄 —</div>
+  <div class="tag-row">
+    <span class="tag">🎤 怒吼</span><span class="tag">👋 掌掴</span>
+    <span class="tag">☕ 摔物</span><span class="tag">💪 掀桌</span>
+  </div>
+  <div class="coin-row"><span>🪙</span><span id="coin-disp">0</span></div>
+  <div>选个你想发泄的对象：</div>
+  <div class="boss-row" id="boss-row"></div>
+  <button class="btn btn-start" onclick="startGame()">💢 开始发泄</button>
+  <button class="btn btn-ghost" onclick="showHelp()">📖 怎么发泄？</button>
+</div>
+
+<!-- GAME SCREEN -->
+<div id="game-scr" class="scr hidden">
+  <div class="office-bg" id="office-bg">
+    <div class="office-wall-art">🏢 骂了么总部·情绪释放室</div>
+    <div class="office-clock">🕐 18:01</div>
+    <div class="office-shelf"><span>📚</span><span>🏆</span><span>📋</span></div>
+  </div>
+
+  <div class="boss-container" id="boss-container">
+    <div class="boss-head" id="boss-head">
+      <div class="boss-hair" id="boss-hair"></div>
+      <div class="boss-brows">
+        <div class="boss-brow" id="brow-l"></div>
+        <div class="boss-brow r" id="brow-r"></div>
+      </div>
+      <div class="boss-eyes">
+        <div class="boss-eye"><div class="pupil" id="pupil-l"></div></div>
+        <div class="boss-eye"><div class="pupil" id="pupil-r"></div></div>
+      </div>
+      <div class="boss-nose"></div>
+      <div class="boss-mouth" id="boss-mouth"></div>
+      <div class="boss-cheek l" id="cheek-l"></div>
+      <div class="boss-cheek r" id="cheek-r"></div>
+    </div>
+    <div class="boss-body-wrap">
+      <div class="boss-suit"><div class="boss-collar"></div><div class="boss-tie"></div></div>
+    </div>
+  </div>
+
+  <div class="desk-area" id="desk-area">
+    <span>☕</span><span>💻</span><span>📄</span><span>📱</span><span>✏️</span><span>🗂️</span>
+  </div>
+
+  <div class="speech" id="speech"></div>
+
+  <div class="hud">
+    <div><span class="hud-score">💢 <span id="hud-score">0</span></span></div>
+    <div class="hud-combo" id="hud-combo"></div>
+    <div class="hud-hp">Boss ❤️ <span id="hud-boss-hp">100</span>%</div>
+  </div>
+
+  <div class="rage-wrap">
+    <span class="rage-label">😡怒气</span>
+    <div class="rage-track"><div class="rage-fill" id="rage-fill"></div></div>
+  </div>
+
+  <div class="attacks">
+    <button class="atk-btn atk-yell" id="btn-yell">
+      <span class="atk-emoji">🎤</span><span class="atk-label">怒吼</span>
+    </button>
+    <button class="atk-btn atk-slap" id="btn-slap">
+      <span class="atk-emoji">👋</span><span class="atk-label">掌掴</span>
+    </button>
+    <button class="atk-btn atk-throw" id="btn-throw">
+      <span class="atk-emoji">☕</span><span class="atk-label">摔物</span>
+    </button>
+    <button class="atk-btn atk-flip" id="btn-flip" disabled>
+      <span class="atk-emoji">💪</span><span class="atk-label">掀桌</span>
+    </button>
+  </div>
+
+  <div class="flash red" id="flash-red"></div>
+  <div class="flash white" id="flash-white"></div>
+  <div class="flash gold" id="flash-gold"></div>
+  <div class="particle-box" id="particle-box"></div>
+</div>
+
+<!-- RESULT -->
+<div class="result-overlay hidden" id="result-overlay">
+  <div class="res-emoji" id="res-emoji"></div>
+  <div class="res-title" id="res-title"></div>
+  <div class="res-detail" id="res-detail"></div>
+  <div class="res-coins" id="res-coins"></div>
+  <button class="btn btn-start" onclick="restartGame()">🔄 再发泄一局</button>
+  <button class="btn btn-ghost" onclick="backToMenu()" style="color:#FFF;border-color:#FFF;">🏠 换人</button>
+</div>
+
+<script>
+// ==================== DATA ====================
+const BOSSES = [
+  {id:'pig',emoji:'🐷',name:'猪老板',hp:200,coins:30,cost:0,arrogance:.7,phrases:{hi:['"你这种员工我见多了"','"能干干,不能干滚蛋"','"不干有的是人干"','"你还想不想干了?"','"就你? 能翻什么浪"'],mid:['"你...你别乱来啊"','"有事好商量行不行"','"我叫保安了!"','"你冷静一下!"'],lo:['"对不起对不起!"','"我错了行了吧!"','"涨工资!涨工资!"','"别打了求你了!"','"我道歉!我道歉!"']}},
+  {id:'fox',emoji:'🦊',name:'狐狸总监',hp:280,coins:50,cost:60,arrogance:.8,phrases:{hi:['"你看看你什么态度"','"年轻人不要太气盛"','"你这种人一辈子也就这样了"','"我随便招个人都比你强"','"你跟我斗?嫩了点"'],mid:['"等等...你认真的?"','"别冲动,有话好好说"','"这...这不合规矩!"'],lo:['"我错了!是我错了!"','"你要什么我都答应!"','"别,别打了..."','"我以后再也不PUA了!"']}},
+  {id:'wolf',emoji:'🐺',name:'狼性CEO',hp:380,coins:80,cost:150,arrogance:.9,phrases:{hi:['"996是福报懂不懂!"','"弱者才需要休息"','"你不配跟我谈条件"','"末位淘汰听说过吗"','"你这种人就该被优化"'],mid:['"你...你敢动手?"','"我有的是律师!"','"你别以为这样有用"'],lo:['"我错了!真的错了!"','"取消996!取消!"','"所有人都涨薪!"','"你赢了...你赢了..."']}},
+  {id:'devil',emoji:'👹',name:'恶魔投资人',hp:500,coins:120,cost:350,arrogance:1,phrases:{hi:['"你的命都是公司的"','"我吃过的盐比你吃过的饭还多"','"想跟我斗?不自量力"','"信不信我让你在行业里混不下去"','"跪下,我可以考虑放过你"'],mid:['"你...你疯了?!"','"保安!!保安!!"','"我要报警了!"'],lo:['"饶了我吧!"','"我...我把股份给你!"','"求求你停下!"','"我再也不敢了!!"']}},
+];
+
+const THROWABLES = ['☕','📎','📌','🗂️','📊','🖊️','📒','🔪','💣','🧱','⚡'];
+const IMPACT_EMOJI = ['💥','⭐','💢','🔥','👊','💫','⚡','🗯️'];
+
+// ==================== STATE ====================
+let G={
+  bossIdx:0,bossHp:0,bossMaxHp:0,score:0,combo:0,maxCombo:0,rage:0,rageMax:100,
+  running:false,gameOver:false,totalCoins:parseInt(localStorage.getItem('mala_coins')||'0'),
+  earnedCoins:0,bossPhase:'hi',flipReady:false,flipCooldown:0,
+  yellHeld:false,screamTimer:null,
+};
+
+// ==================== AUDIO ====================
+let actx=null,analyser=null,micStream=null,vd=new Uint8Array(128);
+function initAudio(){if(!actx)try{actx=new(window.AudioContext||window.webkitAudioContext)()}catch(e){}}
+function sfx(f,d,t='square',v=.05){if(!actx)return;try{const o=actx.createOscillator(),g=actx.createGain();o.type=t;o.frequency.value=f;g.gain.setValueAtTime(v,actx.currentTime);g.gain.exponentialRampToValueAtTime(.001,actx.currentTime+d);o.connect(g);g.connect(actx.destination);o.start();o.stop(actx.currentTime+d);}catch(e){}}
+async function initMic(){if(micStream)return true;try{micStream=await navigator.mediaDevices.getUserMedia({audio:true,video:false});if(!actx)initAudio();analyser=actx.createAnalyser();analyser.fftSize=256;analyser.smoothingTimeConstant=.2;actx.createMediaStreamSource(micStream).connect(analyser);return true;}catch(e){return false;}}
+function readVol(){if(!analyser)return 0;analyser.getByteFrequencyData(vd);let s=0;for(let i=0;i<vd.length;i++)s+=vd[i];return Math.min(100,Math.round(s/vd.length*1.5));}
+function stopMic(){if(micStream){micStream.getTracks().forEach(t=>t.stop());micStream=null;}analyser=null;}
+function sfxSlap(){sfx(300,.12,'square',.08);setTimeout(()=>sfx(150,.08,'sawtooth',.06),50);}
+function sfxThrow(){sfx(500,.08,'triangle',.04);sfx(200,.15,'sawtooth',.06);}
+function sfxFlip(){sfx(40,.6,'sawtooth',.15);setTimeout(()=>sfx(30,.5,'triangle',.12),200);setTimeout(()=>sfx(20,.8,'square',.1),400);}
+function sfxYell(v){sfx(200+v,.15,'sawtooth',.02+v/2000);}
+function sfxCombo(n){sfx(Math.min(400+n*80,1800),.1,'square',.04);}
+function sfxWin(){[523,659,784,1047,1319].forEach((f,i)=>setTimeout(()=>sfx(f,.18,'triangle',.06),i*70));}
+function sfxLose(){[400,300,200,100,60].forEach((f,i)=>setTimeout(()=>sfx(f,.25,'sawtooth',.05),i*120));}
+function sfxClick(){sfx(700,.06,'square',.02);}
+
+// ==================== DOM ====================
+const $=s=>document.querySelector(s);
+
+// ==================== INIT ====================
+function initStartScreen(){
+  $('#boss-row').innerHTML=BOSSES.map((b,i)=>{
+    const l=b.cost>0&&G.totalCoins<b.cost&&i>0;
+    return `<div class="boss-opt ${i===0&&!l?'sel':''} ${l?'locked':''}" onclick="${l?'':i===0||b.cost===0||G.totalCoins>=b.cost?'selBoss('+i+')':'unlockBoss('+i+')'}">
+      <span class="bo-emoji">${b.emoji}</span><span class="bo-name">${b.name}</span><span class="bo-diff">${l?'🔒':'HP:'+b.hp}</span>
+    </div>`;
+  }).join('');
+  $('#coin-disp').textContent=G.totalCoins;
+}
+function selBoss(i){G.bossIdx=i;sfxClick();document.querySelectorAll('.boss-opt').forEach((c,j)=>c.classList.toggle('sel',j===i));}
+function unlockBoss(i){const b=BOSSES[i];if(G.totalCoins<b.cost)return;G.totalCoins-=b.cost;localStorage.setItem('mala_coins',G.totalCoins);initStartScreen();selBoss(i);}
+
+// ==================== PARTICLES ====================
+function spawnFX(x,y,emoji,count=8,range=80){
+  const box=$('#particle-box');
+  for(let i=0;i<count;i++){
+    const p=document.createElement('span');p.className='fx-particle';p.textContent=emoji;
+    p.style.left=x+'px';p.style.top=y+'px';
+    p.style.setProperty('--px',(Math.random()-.5)*range*2+'px');
+    p.style.setProperty('--py',(Math.random()*-range-20)+'px');
+    p.style.animationDuration=(.4+Math.random()*.4)+'s';
+    box.appendChild(p);setTimeout(()=>p.remove(),700);
+  }
+}
+function spawnImpact(x,y){spawnFX(x,y,IMPACT_EMOJI[Math.floor(Math.random()*IMPACT_EMOJI.length)],12,100);}
+function showDmg(x,y,val,color='#FFD700'){
+  const el=document.createElement('div');el.className='dmg-num';
+  el.textContent=val;el.style.left=x+'px';el.style.top=y+'px';el.style.color=color;
+  document.body.appendChild(el);setTimeout(()=>el.remove(),800);
+}
+function flashScreen(color){
+  const el=$('#flash-'+color);if(!el)return;el.style.opacity='1';
+  setTimeout(()=>el.style.opacity='0',100);
+}
+function showToast(msg,color='#FFF'){
+  const el=document.createElement('div');el.className='toast';el.textContent=msg;el.style.color=color;document.body.appendChild(el);setTimeout(()=>el.remove(),1500);
+}
+
+// ==================== BOSS FACE ====================
+function setBossFace(phase){
+  G.bossPhase=phase;
+  const head=$('#boss-head'),mouth=$('#boss-mouth');
+  const bl=$('#brow-l'),br=$('#brow-r');
+  const pl=$('#pupil-l'),pr=$('#pupil-r');
+  head.classList.remove('hurt','crying');
+
+  if(phase==='hi'){
+    // Arrogant
+    mouth.className='boss-mouth smirk';
+    bl.className='boss-brow angry';br.className='boss-brow angry r';
+    pl.classList.remove('big');pr.classList.remove('big');
+    document.querySelectorAll('.boss-eye').forEach(e=>e.classList.remove('squint','shut'));
+  }else if(phase==='mid'){
+    // Scared/defensive
+    mouth.className='boss-mouth open';
+    bl.className='boss-brow scared';br.className='boss-brow scared r';
+    pl.classList.add('big');pr.classList.add('big');
+    document.querySelectorAll('.boss-eye').forEach(e=>{e.classList.remove('squint','shut');});
+    head.classList.add('hurt');
+  }else if(phase==='lo'){
+    // Begging
+    mouth.className='boss-mouth beg';
+    bl.className='boss-brow scared';br.className='boss-brow scared r';
+    pl.classList.add('big');pr.classList.add('big');
+    head.classList.add('crying');
+  }
+}
+
+function slapFace(side){
+  const boss=$('#boss-container');
+  boss.classList.remove('slap-left','slap-right');void boss.offsetWidth;
+  boss.classList.add(side==='l'?'slap-left':'slap-right');
+
+  // Show slap mark
+  const head=$('#boss-head');
+  const mark=document.createElement('div');
+  mark.className='slap-mark '+(side==='l'?'l':'r');
+  head.appendChild(mark);setTimeout(()=>mark.remove(),1500);
+
+  // Redden cheek
+  const cheek=$('#cheek-'+(side==='l'?'l':'r'));
+  cheek.classList.add('slap');setTimeout(()=>cheek.classList.remove('slap'),800);
+
+  // Hair blow
+  const hair=$('#boss-hair');
+  hair.classList.add('blown');setTimeout(()=>hair.classList.remove('blown'),300);
+}
+
+function recoilBoss(){
+  const boss=$('#boss-container');
+  boss.classList.remove('recoil');void boss.offsetWidth;
+  boss.classList.add('recoil');
+}
+
+function shakeDesk(){
+  const desk=$('#desk-area');
+  desk.classList.remove('slammed');void desk.offsetWidth;
+  desk.classList.add('slammed');
+}
+
+function flipDesk(){
+  const desk=$('#desk-area');
+  desk.classList.add('flipped');
+  setTimeout(()=>{desk.classList.remove('flipped');},1000);
+}
+
+// ==================== ATTACKS ====================
+function doYell(){
+  if(!G.running||G.gameOver)return;
+  const vol=readVol();
+  if(vol<5)return;
+  const dmg=Math.round(vol*.35*(1+G.combo*.1));
+  G.bossHp=Math.max(0,G.bossHp-dmg);G.score+=dmg;G.combo++;G.rage=Math.min(G.rageMax,G.rage+vol*.3);
+  if(G.combo>G.maxCombo)G.maxCombo=G.combo;
+  sfxYell(vol);
+  recoilBoss();shakeDesk();
+  const bRect=$('#boss-container').getBoundingClientRect();
+  spawnFX(bRect.left+bRect.width/2,bRect.top+bRect.height/2,'💨',6,60);
+  showDmg(bRect.left+bRect.width/3+Math.random()*40,bRect.top,dmg,G.combo>=8?'#FFD700':'#FFF');
+  flashScreen('white');
+  updateUI();checkPhase();checkEnd();
+}
+
+function doSlap(event){
+  if(!G.running||G.gameOver)return;
+  const side=Math.random()>.5?'l':'r';
+  const dmg=Math.round(18+Math.random()*12+G.combo*3);
+  G.bossHp=Math.max(0,G.bossHp-dmg);G.score+=dmg;G.combo++;G.rage=Math.min(G.rageMax,G.rage+20);
+  if(G.combo>G.maxCombo)G.maxCombo=G.combo;
+  sfxSlap();
+  slapFace(side);shakeDesk();
+  const bRect=$('#boss-container').getBoundingClientRect();
+  spawnImpact(bRect.left+bRect.width/2,bRect.top+30);
+  showDmg(bRect.left+(side==='l'?20:bRect.width-60),bRect.top+30,'👋'+dmg,'#FF9800');
+  flashScreen('red');
+  updateUI();checkPhase();checkEnd();
+}
+
+function doThrow(){
+  if(!G.running||G.gameOver)return;
+  const item=THROWABLES[Math.floor(Math.random()*THROWABLES.length)];
+  const dmg=Math.round(10+Math.random()*20+G.combo*2);
+  G.bossHp=Math.max(0,G.bossHp-dmg);G.score+=dmg;G.combo++;G.rage=Math.min(G.rageMax,G.rage+15);
+  if(G.combo>G.maxCombo)G.maxCombo=G.combo;
+  sfxThrow();
+  recoilBoss();
+  // Flying item
+  const bRect=$('#boss-container').getBoundingClientRect();
+  const itemEl=document.createElement('span');
+  itemEl.className='flying-item';itemEl.textContent=item;
+  itemEl.style.left=(bRect.left-20)+'px';itemEl.style.top=(bRect.bottom-40)+'px';
+  itemEl.style.setProperty('--fx','80px');itemEl.style.setProperty('--fy','-100px');itemEl.style.setProperty('--fr',(Math.random()*360)+'deg');
+  document.body.appendChild(itemEl);setTimeout(()=>itemEl.remove(),800);
+  showDmg(bRect.left+bRect.width/2,bRect.top,dmg,'#8BC34A');
+  updateUI();checkPhase();checkEnd();
+}
+
+function doFlip(){
+  if(!G.running||G.gameOver||!G.flipReady)return;
+  G.flipReady=false;G.flipCooldown=3;
+  const dmg=Math.round(G.bossMaxHp*.3+G.rage*.5);
+  G.bossHp=Math.max(0,G.bossHp-dmg);G.score+=dmg;G.combo+=3;
+  if(G.combo>G.maxCombo)G.maxCombo=G.combo;
+  sfxFlip();
+  flipDesk();
+  const bRect=$('#boss-container').getBoundingClientRect();
+  const boss=$('#boss-container');boss.classList.add('flipped');
+  setTimeout(()=>boss.classList.remove('flipped'),800);
+  for(let i=0;i<5;i++){setTimeout(()=>{const item=THROWABLES[Math.floor(Math.random()*THROWABLES.length)];const e=document.createElement('span');e.className='flying-item';e.textContent=item;e.style.left=(bRect.left+Math.random()*100)+'px';e.style.top=(bRect.top+Math.random()*60)+'px';e.style.setProperty('--fx',(Math.random()-.5)*200+'px');e.style.setProperty('--fy',-(Math.random()*100+60)+'px');e.style.setProperty('--fr',(Math.random()*720-360)+'deg');document.body.appendChild(e);setTimeout(()=>e.remove(),800);},i*80);}
+  spawnImpact(bRect.left+bRect.width/2,bRect.top-20);spawnImpact(bRect.left+bRect.width/2,bRect.top-20);
+  showDmg(bRect.left+bRect.width/2-30,bRect.top-30,'💪掀桌!'+dmg,'#FFD740');
+  flashScreen('gold');flashScreen('white');
+  document.querySelectorAll('.boss-eye').forEach(e=>e.classList.add('shut'));
+  setTimeout(()=>document.querySelectorAll('.boss-eye').forEach(e=>e.classList.remove('shut')),600);
+  setBossFace('lo');
+  updateUI();checkEnd();
+  // Cooldown
+  $('#btn-flip').disabled=true;
+  const countdown=setInterval(()=>{G.flipCooldown--;if(G.flipCooldown<=0){G.flipReady=G.rage>=G.rageMax;$('#btn-flip').disabled=!G.flipReady;clearInterval(countdown);}},1000);
+}
+
+// ==================== BOSS AI ====================
+let bossTalkTimer=null;
+function startBossTalk(){
+  if(!G.running||G.gameOver)return;
+  const boss=BOSSES[G.bossIdx];
+  const phase=G.bossPhase;
+  const phrases=boss.phrases[phase]||boss.phrases.hi;
+  const phrase=phrases[Math.floor(Math.random()*phrases.length)];
+  const el=$('#speech');el.textContent=phrase;el.style.animation='none';void el.offsetWidth;el.style.animation='bubble-in .3s ease-out';
+
+  // Boss attacks back
+  if(phase==='hi'){
+    const dmg=3+Math.round(Math.random()*4);
+    // No player HP in this version, but boss can reduce rage
+    G.rage=Math.max(0,G.rage-5);
+  }
+
+  bossTalkTimer=setTimeout(()=>startBossTalk(),2500+Math.random()*2000);
+}
+
+// ==================== MIC FOR YELL ====================
+$('#btn-yell').addEventListener('mousedown',async e=>{e.preventDefault();if(!G.running||G.gameOver)return;if(!micStream){const ok=await initMic();if(!ok){showToast('需要麦克风权限!','#F44');return;}}G.yellHeld=true;startYellLoop();});
+$('#btn-yell').addEventListener('mouseup',()=>{G.yellHeld=false;});
+$('#btn-yell').addEventListener('mouseleave',()=>{G.yellHeld=false;});
+$('#btn-yell').addEventListener('touchstart',async e=>{e.preventDefault();if(!G.running||G.gameOver)return;if(!micStream){const ok=await initMic();if(!ok){showToast('需要麦克风权限!','#F44');return;}}G.yellHeld=true;startYellLoop();});
+$('#btn-yell').addEventListener('touchend',e=>{e.preventDefault();G.yellHeld=false;});
+$('#btn-yell').addEventListener('touchcancel',()=>{G.yellHeld=false;});
+
+let yellLoop=null;
+function startYellLoop(){
+  if(yellLoop)return;
+  yellLoop=setInterval(()=>{
+    if(!G.yellHeld||!G.running||G.gameOver){
+      clearInterval(yellLoop);yellLoop=null;return;
+    }
+    doYell();
+  },80);
+}
+
+// Other attack buttons
+$('#btn-slap').addEventListener('mousedown',e=>{e.preventDefault();doSlap(e);});
+$('#btn-slap').addEventListener('touchstart',e=>{e.preventDefault();doSlap(e);});
+$('#btn-throw').addEventListener('mousedown',e=>{e.preventDefault();doThrow();});
+$('#btn-throw').addEventListener('touchstart',e=>{e.preventDefault();doThrow();});
+$('#btn-flip').addEventListener('mousedown',e=>{e.preventDefault();doFlip();});
+$('#btn-flip').addEventListener('touchstart',e=>{e.preventDefault();doFlip();});
+
+// Shake for flip
+let lastShake=0;
+window.addEventListener('devicemotion',e=>{
+  if(!G.running||G.gameOver)return;
+  const acc=e.accelerationIncludingGravity;
+  if(!acc)return;
+  const mag=Math.sqrt(acc.x*acc.x+acc.y*acc.y+acc.z*acc.z);
+  if(mag>25&&Date.now()-lastShake>2000&&G.flipReady){
+    lastShake=Date.now();doFlip();
+  }
+});
+
+// Keyboard
+document.addEventListener('keydown',e=>{
+  if(!G.running||G.gameOver)return;
+  if(e.code==='KeyQ'){e.preventDefault();G.yellHeld=true;if(!micStream)initMic().then(ok=>{if(!ok)showToast('需要麦克风','#F44');});startYellLoop();}
+  if(e.code==='KeyW'){e.preventDefault();doSlap(e);}
+  if(e.code==='KeyE'){e.preventDefault();doThrow();}
+  if(e.code==='KeyR'){e.preventDefault();if(G.flipReady)doFlip();}
+});
+document.addEventListener('keyup',e=>{if(e.code==='KeyQ')G.yellHeld=false;});
+
+// ==================== GAME FLOW ====================
+async function startGame(){
+  initAudio();sfxClick();
+  const boss=BOSSES[G.bossIdx];
+  G.bossHp=boss.hp;G.bossMaxHp=boss.hp;G.score=0;G.combo=0;G.maxCombo=0;G.rage=0;G.earnedCoins=0;
+  G.running=true;G.gameOver=false;G.bossPhase='hi';G.flipReady=false;G.flipCooldown=0;
+  G.yellHeld=false;if(yellLoop){clearInterval(yellLoop);yellLoop=null;}
+
+  document.querySelectorAll('.scr').forEach(s=>s.classList.add('hidden'));
+  $('#game-scr').classList.remove('hidden');
+  $('#office-bg').classList.remove('destroyed');
+  $('#btn-flip').disabled=true;$('#boss-container').classList.remove('flipped','recoil','slap-left','slap-right');
+  $('#desk-area').classList.remove('flipped','slammed');
+  setBossFace('hi');updateUI();
+  $('#speech').textContent='';
+  setTimeout(()=>{startBossTalk();updateBossSpeech();},500);
+
+  // Init mic for yell
+  if(G.micFirst)initMic();
+}
+
+function updateBossSpeech(){
+  const boss=BOSSES[G.bossIdx];
+  const phrases=boss.phrases[G.bossPhase]||boss.phrases.hi;
+  const phrase=phrases[Math.floor(Math.random()*phrases.length)];
+  $('#speech').textContent=phrase;
+}
+
+function checkPhase(){
+  const hpPct=G.bossHp/G.bossMaxHp;
+  if(hpPct<.15&&G.bossPhase!=='lo'){setBossFace('lo');updateBossSpeech();}
+  else if(hpPct<.4&&G.bossPhase==='hi'){setBossFace('mid');updateBossSpeech();}
+}
+
+function checkEnd(){
+  if(G.bossHp<=0){battleOver(true);return;}
+  updateRage();
+}
+
+function updateRage(){
+  const pct=G.rage/G.rageMax;
+  $('#rage-fill').style.width=(pct*100)+'%';
+  if(G.rage>=G.rageMax&&!G.flipReady&&G.flipCooldown<=0){
+    G.flipReady=true;$('#btn-flip').disabled=false;
+    $('#rage-fill').classList.add('full');
+    showToast('💪 掀桌就绪! 狠狠掀!','#FFD740');
+  }
+  if(G.rage<G.rageMax&&!G.flipReady){
+    $('#rage-fill').classList.remove('full');
+  }
+}
+
+function updateUI(){
+  $('#hud-score').textContent=G.score;
+  $('#hud-boss-hp').textContent=Math.round(Math.max(0,G.bossHp/G.bossMaxHp*100));
+  const ce=$('#hud-combo');
+  if(G.combo>=5){ce.textContent='🔥'+G.combo+'连击! x'+(1+G.combo*.1).toFixed(1);ce.classList.add('pop');setTimeout(()=>ce.classList.remove('pop'),300);}
+  else if(G.combo>=2){ce.textContent='🔥'+G.combo+'连击';}
+  else{ce.textContent='';}
+  updateRage();
+}
+
+function battleOver(won){
+  G.gameOver=true;G.running=false;stopMic();
+  if(bossTalkTimer)clearTimeout(bossTalkTimer);
+  if(yellLoop){clearInterval(yellLoop);yellLoop=null;}
+  G.yellHeld=false;
+
+  if(won){
+    G.earnedCoins=BOSSES[G.bossIdx].coins+Math.floor(G.maxCombo*2);
+    G.totalCoins+=G.earnedCoins;localStorage.setItem('mala_coins',G.totalCoins);
+    sfxWin();
+    const o=$('#result-overlay');o.classList.remove('hidden');
+    $('#res-emoji').textContent='👑';$('#res-title').textContent='发泄完毕!爽!';
+    $('#res-detail').innerHTML=`你彻底击溃了<b style="color:#FFD700">${BOSSES[G.bossIdx].name}</b>!<br>💢 出气值: <b style="color:#FFD700">${G.score}</b><br>🔥 最高连击: <b>${G.maxCombo}</b><br>😡 怒气峰值: <b>${G.rage}</b>`;
+    $('#res-coins').textContent='🪙 +'+G.earnedCoins;
+    // Destroy office
+    $('#office-bg').classList.add('destroyed');
+    // Confetti
+    for(let i=0;i<30;i++){setTimeout(()=>{const c=document.createElement('span');c.className='fx-particle';c.textContent=['🎉','✨','🌟','💫','🎊'][Math.floor(Math.random()*5)];c.style.left=Math.random()*100+'%';c.style.top='-20px';c.style.setProperty('--px','0');c.style.setProperty('--py',(100+Math.random()*60)+'px');c.style.animationDuration=(1.5+Math.random()*1.5)+'s';document.body.appendChild(c);setTimeout(()=>c.remove(),2000);},i*30);}
+  }else{
+    G.earnedCoins=Math.floor(G.score/5);
+    G.totalCoins+=G.earnedCoins;localStorage.setItem('mala_coins',G.totalCoins);
+    sfxLose();
+    const o=$('#result-overlay');o.classList.remove('hidden');
+    $('#res-emoji').textContent='😤';$('#res-title').textContent='还需继续发泄...';
+    $('#res-detail').innerHTML=`没发泄够...<br>💢 出气值: <b>${G.score}</b><br>🔥 最高连击: <b>${G.maxCombo}</b>`;
+    $('#res-coins').textContent='🪙 +'+G.earnedCoins;
+  }
+}
+
+function restartGame(){$('#result-overlay').classList.add('hidden');startGame();}
+function backToMenu(){
+  stopMic();if(bossTalkTimer)clearTimeout(bossTalkTimer);
+  if(yellLoop){clearInterval(yellLoop);yellLoop=null;}
+  G.running=false;G.gameOver=false;G.yellHeld=false;
+  $('#result-overlay').classList.add('hidden');
+  document.querySelectorAll('.scr').forEach(s=>s.classList.add('hidden'));
+  $('#start-scr').classList.remove('hidden');
+  initStartScreen();
+}
+function showHelp(){
+  alert(`📖 《骂了么》发泄指南
+
+🎤 怒吼：按住蓝色按钮，对着麦克风大吼！
+   → 音量越大伤害越高！吼到嗓子哑！
+
+👋 掌掴：点击橙色按钮，狠狠扇老板！
+   → 巴掌印会留在脸上！左右开弓！
+
+☕ 摔物：点击绿色按钮，抄起东西砸过去！
+   → 咖啡杯、订书机、文件夹...随便砸！
+
+💪 掀桌：蓄满怒气条后，点击金色按钮！
+   → 或者直接用力摇晃手机！！
+   → 整个办公室天翻地覆！
+
+😡 怒气条：每次攻击积累怒气
+   → 攒满即可发动"掀桌"大招
+   → 连续攻击保持连击，伤害叠加！
+
+🎭 Boss会经历三个阶段：
+   → 傲慢 → 恐惧 → 求饶
+   → 表情和对话都会变化！
+
+⌨️ 键盘快捷键：Q怒吼 W掌掴 E摔物 R掀桌`);
+}
+
+// ==================== BOOT ====================
+initStartScreen();
+G.micFirst=false; // Don't auto-request mic on start
+</script>
+</body>
+</html>

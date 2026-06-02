@@ -1,0 +1,200 @@
+/* ==========================================================================
+   Home Page — Hero + Featured Carousel
+   ========================================================================== */
+
+/* ---- Hero ---- */
+.hero {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, var(--hero-gradient-start, #0f172a), var(--hero-gradient-end, #334155));
+}
+.hero-bg-image {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  opacity: 0.4;
+}
+.hero-bg-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.4;
+}
+.hero-parallax-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  transition: transform 0.1s linear;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  padding: var(--content-padding);
+  max-width: 800px;
+}
+
+.hero-greeting {
+  font-size: var(--font-size-lg);
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: var(--space-sm);
+  animation: fadeInUp 0.6s ease both;
+}
+.hero-name {
+  font-size: var(--font-size-5xl);
+  font-weight: var(--font-weight-extrabold);
+  color: #fff;
+  letter-spacing: -0.03em;
+  margin-bottom: var(--space-sm);
+  animation: fadeInUp 0.6s 0.1s ease both;
+  background: linear-gradient(135deg, #fff 0%, rgba(255,255,255,0.8) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.hero-tagline {
+  font-size: var(--font-size-xl);
+  color: rgba(255, 255, 255, 0.65);
+  margin-bottom: var(--space-xl);
+  animation: fadeInUp 0.6s 0.2s ease both;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.hero-actions {
+  display: flex;
+  gap: var(--space-md);
+  justify-content: center;
+  animation: fadeInUp 0.6s 0.3s ease both;
+}
+.hero .btn-primary {
+  background: #fff;
+  color: #1a1a1a;
+  border-color: #fff;
+}
+.hero .btn-primary:hover {
+  background: rgba(255,255,255,0.9);
+}
+.hero .btn-secondary {
+  border-color: rgba(255,255,255,0.3);
+  color: #fff;
+}
+.hero .btn-secondary:hover {
+  background: rgba(255,255,255,0.1);
+  border-color: rgba(255,255,255,0.5);
+}
+
+/* ---- Scroll Hint ---- */
+.hero-scroll {
+  position: absolute;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1;
+  animation: pulse 2s infinite;
+}
+.hero-scroll span {
+  display: block;
+  width: 24px;
+  height: 40px;
+  border: 2px solid rgba(255,255,255,0.4);
+  border-radius: 12px;
+  position: relative;
+}
+.hero-scroll span::after {
+  content: "";
+  position: absolute;
+  top: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 8px;
+  background: rgba(255,255,255,0.6);
+  border-radius: 2px;
+  animation: scrollDot 1.5s ease infinite;
+}
+@keyframes scrollDot {
+  0% { top: 6px; opacity: 1; }
+  100% { top: 24px; opacity: 0; }
+}
+
+/* ---- Featured Carousel ---- */
+.featured-section {
+  padding: var(--space-4xl) 0;
+}
+.featured-carousel {
+  position: relative;
+}
+.carousel-track {
+  display: flex;
+  gap: var(--space-lg);
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: var(--space-md);
+  scrollbar-width: none;
+}
+.carousel-track::-webkit-scrollbar { display: none; }
+
+.carousel-item {
+  flex: 0 0 300px;
+  scroll-snap-align: start;
+}
+.carousel-item a {
+  display: block;
+  color: inherit;
+}
+.carousel-item img {
+  width: 100%;
+  aspect-ratio: 4/3;
+  object-fit: cover;
+  border-radius: var(--radius-lg);
+  transition: transform var(--transition-base);
+}
+.carousel-item:hover img {
+  transform: scale(1.03);
+}
+.carousel-item__title {
+  margin-top: var(--space-sm);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-sm);
+}
+.carousel-item__cat {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+}
+
+.carousel-nav {
+  display: flex;
+  gap: var(--space-sm);
+  justify-content: center;
+  margin-top: var(--space-md);
+}
+.carousel-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: none;
+  background: var(--color-border);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+.carousel-dot.active {
+  background: var(--color-accent);
+  width: 24px;
+  border-radius: 4px;
+}
+
+@media (min-width: 768px) {
+  .hero-name { font-size: var(--font-size-6xl); }
+  .carousel-item { flex: 0 0 360px; }
+}

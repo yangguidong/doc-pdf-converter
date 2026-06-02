@@ -1,0 +1,10 @@
+/* 幽灵主题 - Ghost Theme */
+:root {
+  --troll-bg: linear-gradient(180deg, #0d0221, #150578);
+  --troll-primary: #6b46c1;
+  --troll-accent: #00ff88;
+  --troll-text: #e0e0ff;
+  --troll-player-emoji: '👻';
+  --troll-danger-color: #ff006e;
+  --troll-success-color: #00ff88;
+}

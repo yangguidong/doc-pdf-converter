@@ -1,0 +1,10 @@
+/* 打工人主题 - Office Theme */
+:root {
+  --troll-bg: linear-gradient(180deg, #1a1a2e, #2d2d44);
+  --troll-primary: #4a5568;
+  --troll-accent: #e94560;
+  --troll-text: #e2e8f0;
+  --troll-player-emoji: '💼';
+  --troll-danger-color: #e53e3e;
+  --troll-success-color: #38a169;
+}

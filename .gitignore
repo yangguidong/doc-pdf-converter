@@ -9,3 +9,4 @@ temp/
 *.exe
 perf_test.*
 test_*
+.claude/

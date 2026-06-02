@@ -1,0 +1,94 @@
+/* ==========================================================================
+   About Page — Profile + Timeline
+   ========================================================================== */
+
+/* ---- Layout ---- */
+.about-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-2xl);
+}
+.about-photo {
+  text-align: center;
+}
+.about-photo img {
+  width: 240px;
+  height: 240px;
+  border-radius: var(--radius-xl);
+  object-fit: cover;
+  box-shadow: var(--shadow-lg);
+}
+.about-bio {
+  line-height: var(--line-height-relaxed);
+  color: var(--color-text-secondary);
+}
+.about-philosophy {
+  margin-top: var(--space-xl);
+  padding: var(--space-xl);
+  background: var(--color-bg-secondary);
+  border-radius: var(--radius-lg);
+  border-left: 4px solid var(--color-accent);
+}
+.about-philosophy__title {
+  font-size: var(--font-size-xl);
+  margin-bottom: var(--space-sm);
+}
+
+/* ---- Timeline ---- */
+.timeline {
+  position: relative;
+  padding-left: 32px;
+  margin-top: var(--space-3xl);
+}
+.timeline::before {
+  content: "";
+  position: absolute;
+  left: 8px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--color-border);
+}
+.timeline-item {
+  position: relative;
+  margin-bottom: var(--space-xl);
+  padding-bottom: var(--space-lg);
+}
+.timeline-item::before {
+  content: "";
+  position: absolute;
+  left: -28px;
+  top: 4px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid var(--color-accent);
+  background: var(--color-bg-primary);
+}
+.timeline-item__date {
+  font-size: var(--font-size-sm);
+  color: var(--color-accent);
+  font-weight: var(--font-weight-semibold);
+  margin-bottom: var(--space-xs);
+}
+.timeline-item__title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  margin-bottom: var(--space-xs);
+}
+.timeline-item__venue {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+.timeline-item__desc {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  margin-top: var(--space-sm);
+  line-height: var(--line-height-relaxed);
+}
+
+.timeline-item--award::before { border-color: var(--color-warning); }
+.timeline-item--award .timeline-item__date { color: var(--color-warning); }
+
+.timeline-item--education::before { border-color: var(--color-success); }
+.timeline-item--education .timeline-item__date { color: var(--color-success); }

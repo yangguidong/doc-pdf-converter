@@ -1,0 +1,10 @@
+/* 答辩主题 - Poop Theme */
+:root {
+  --troll-bg: linear-gradient(180deg, #3E2723, #4E342E);
+  --troll-primary: #8B4513;
+  --troll-accent: #FFD700;
+  --troll-text: #FFF8DC;
+  --troll-player-emoji: '🏃';
+  --troll-danger-color: #8B0000;
+  --troll-success-color: #228B22;
+}
