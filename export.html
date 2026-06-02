@@ -3,42 +3,28 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>导出部署文件</title>
+<title>导出缺失文件</title>
 <style>
   *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:'Inter',system-ui,sans-serif;background:#08080c;color:#f0f0f0;min-height:100vh;display:flex;align-items:center;justify-content:center;flex-direction:column;padding:24px}
-  h1{font-size:1.6rem;margin-bottom:8px;background:linear-gradient(135deg,#a78bfa,#f472b6,#60a5fa);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
-  p{color:#7a7a8a;margin-bottom:16px;font-size:.88rem;text-align:center}
-  .card{background:#111118;border:1px solid rgba(255,255,255,.05);border-radius:16px;padding:32px;max-width:550px;width:100%;text-align:center}
-  button{padding:12px 28px;border-radius:8px;font-size:.9rem;font-weight:600;cursor:pointer;border:none;transition:all .2s;margin:4px}
-  .btn-export{background:linear-gradient(135deg,#34d399,#059669);color:#fff}
-  .btn-export:hover{box-shadow:0 4px 20px rgba(52,211,153,.3)}
-  .btn-miss{background:rgba(244,63,94,.1);border:1px solid rgba(244,63,94,.2);color:#f43f5e}
-  .btn-miss:hover{background:rgba(244,63,94,.2)}
-  .btn-media{background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.2);color:#60a5fa}
-  .btn-media:hover{background:rgba(59,130,246,.2)}
-  .log{background:rgba(0,0,0,.3);border-radius:8px;padding:16px;margin-top:16px;max-height:250px;overflow-y:auto;font-family:'JetBrains Mono',monospace;font-size:.68rem;color:#7a7a8a;text-align:left;display:none}
+  body{font-family:'Inter',system-ui,sans-serif;background:#08080c;color:#f0f0f0;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+  h1{font-size:1.5rem;margin-bottom:8px;background:linear-gradient(135deg,#34d399,#059669);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .card{background:#111118;border:1px solid rgba(255,255,255,.05);border-radius:16px;padding:28px;max-width:500px;width:100%;text-align:center}
+  button{padding:14px 32px;border-radius:8px;font-size:.95rem;font-weight:600;cursor:pointer;border:none;transition:all .2s}
+  .btn-go{background:linear-gradient(135deg,#34d399,#059669);color:#fff;width:100%}
+  .btn-go:hover{box-shadow:0 4px 24px rgba(52,211,153,.3)}
+  .log{background:rgba(0,0,0,.3);border-radius:8px;padding:14px;margin-top:16px;max-height:220px;overflow-y:auto;font-family:'JetBrains Mono',monospace;font-size:.65rem;color:#7a7a8a;text-align:left;display:none}
   .log.show{display:block}
   .log .ok{color:#34d399}
   .log .fail{color:#f43f5e}
-  .log .warn{color:#fbbf24}
-  .progress{height:4px;background:rgba(255,255,255,.04);border-radius:2px;margin-top:12px;overflow:hidden;display:none}
-  .progress.show{display:block}
-  .progress-bar{height:100%;background:linear-gradient(90deg,#34d399,#059669);border-radius:2px;width:0%;transition:width .3s}
-  .info{color:#fbbf24;font-size:.72rem;margin-top:12px}
-  .fail-list{font-size:.65rem;max-height:120px;overflow-y:auto;text-align:left;margin-top:8px}
+  .info{font-size:.7rem;margin-top:10px}
+  .count{color:#34d399;font-size:1.2rem;font-weight:700}
 </style>
 </head>
 <body>
 <div class="card">
-  <h1>📦 导出部署文件</h1>
-  <p>第一步：导出纯数据 | 第二步：导出所有图片视频</p>
-
-  <button class="btn-export" onclick="exportDataOnly()">📋 导出 data.js（纯数据，几KB）</button>
-  <button class="btn-media" onclick="exportAllMedia()">📁 导出全部媒体文件（逐个下载）</button>
-  <button class="btn-miss" id="btnRetry" style="display:none" onclick="retryFailed()">⚠️ 重新导出失败的文件</button>
-
-  <div class="progress" id="progress"><div class="progress-bar" id="progressBar"></div></div>
+  <h1>📥 一键导出缺失文件</h1>
+  <p>自动检测 IndexedDB 中的文件，只下载缺失的</p>
+  <button class="btn-go" id="btnGo" onclick="doExport()">🚀 开始自动检测并下载缺失文件</button>
   <div class="log" id="log"></div>
   <div class="info" id="info"></div>
 </div>
@@ -48,63 +34,48 @@ const DB='PF_DB',S='media';
 function odb(){return new Promise((ok,fail)=>{const r=indexedDB.open(DB,1);r.onupgradeneeded=()=>{r.result.createObjectStore(S)};r.onsuccess=()=>ok(r.result);r.onerror=()=>fail(r.error)})}
 async function dbGet(k){const db=await odb();return new Promise(ok=>{const t=db.transaction(S,'readonly');const r=t.objectStore(S).get(k);r.onsuccess=()=>ok(r.result);r.onerror=()=>ok(null)})}
 
-const logEl=document.getElementById('log'),progEl=document.getElementById('progress'),barEl=document.getElementById('progressBar'),infoEl=document.getElementById('info'),btnRetry=document.getElementById('btnRetry');
-let failedKeys=[];
-
+const logEl=document.getElementById('log'),infoEl=document.getElementById('info'),btnGo=document.getElementById('btnGo');
 function log(msg,cls){logEl.classList.add('show');logEl.innerHTML+='<span class="'+cls+'">'+msg+'</span>\n';logEl.scrollTop=logEl.scrollHeight}
-function setProgress(pct){progEl.classList.add('show');barEl.style.width=Math.min(pct,100)+'%'}
-function download(blob,name){
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();
-  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
-}
 
-function getRaw(){const r=localStorage.getItem('pf_data2');if(!r){alert('没有数据');return null}return JSON.parse(r)}
+async function doExport(){
+  btnGo.disabled=true;btnGo.textContent='检测中...';logEl.innerHTML='';
+  const raw=localStorage.getItem('pf_data2');if(!raw){alert('没有数据');return}
+  const data=JSON.parse(raw);
 
-async function exportDataOnly(){
-  const data=getRaw();if(!data)return;
-  logEl.innerHTML='';log('导出纯数据...','ok');
-  const clean=JSON.parse(JSON.stringify(data));
-  Object.keys(clean).forEach(k=>{if(k.startsWith('_m_'))delete clean[k]});
-  clean.mediaKeys=[];
-  const js='window.__PRELOAD__='+JSON.stringify(clean)+';';
-  download(new Blob([js],{type:'application/javascript'}),'data.js');
-  log('✅ data.js 已下载 ('+(js.length/1024).toFixed(1)+'KB)','ok');
-  infoEl.innerHTML='现在点击下方按钮导出所有媒体文件';
-  setProgress(100);
-}
+  // Collect all media keys
+  const allKeys=[];
+  (data.photos||[]).forEach(x=>{(x.imgs&&x.imgs.length?x.imgs:[x.id]).forEach(k=>allKeys.push(k))});
+  (data.videos||[]).forEach(x=>{allKeys.push(x.id);if(x.thumbKey)allKeys.push(x.thumbKey)});
 
-async function exportAllMedia(){
-  const data=getRaw();if(!data)return;
-  logEl.innerHTML='';failedKeys=[];btnRetry.style.display='none';
-  setProgress(0);
-  const keys=new Set();
-  (data.photos||[]).forEach(x=>{(x.imgs&&x.imgs.length?x.imgs:[x.id]).forEach(k=>{if(k)keys.add(k)})});
-  (data.videos||[]).forEach(x=>{if(x.id)keys.add(x.id);if(x.thumbKey)keys.add(x.thumbKey)});
-  log('找到 '+keys.size+' 个媒体文件，开始下载...','ok');
+  log('数据中共 '+allKeys.length+' 个媒体引用','ok');
 
-  let done=0,ok=0,fail=0;const arr=[...keys];
-  for(const k of arr){
-    done++;setProgress(done/arr.length*100);
-    try{const blob=await dbGet(k);if(!blob){fail++;failedKeys.push(k);log('❌ '+k+' (IndexedDB无数据)','fail')}else{const ext=blob.type.split('/')[1]||'bin';download(blob,k+'.'+ext);ok++;log('✅ '+k+'.'+ext+' ('+(blob.size/1024).toFixed(0)+'B)','ok')}}catch(e){fail++;failedKeys.push(k);log('❌ '+k+' (错误)','fail')}
-    await new Promise(r=>setTimeout(r,300));
+  // Check which ones have blobs in IndexedDB
+  let inDB=0,missing=0;
+  const toDownload=[];
+  for(const k of allKeys){
+    const blob=await dbGet(k);
+    if(blob){inDB++;toDownload.push({key:k,blob})}
+    else{missing++}
   }
-  setProgress(100);
-  log('--- 完成: ✅'+ok+' ❌'+fail+' ---','ok');
-  if(fail>0){btnRetry.style.display='inline-block';infoEl.innerHTML='有 '+fail+' 个文件失败，点击下方按钮重新导出失败的文件'}
-  else{infoEl.innerHTML='全部下载完成！将文件放入 uploads/ 文件夹，data.js 替换到项目根目录'}
-}
+  log('IndexedDB中有 '+inDB+' 个文件，缺失 '+missing+' 个引用','ok');
+  if(toDownload.length===0){infoEl.innerHTML='没有可下载的文件';btnGo.disabled=false;btnGo.textContent='🚀 开始';return}
 
-async function retryFailed(){
-  if(!failedKeys.length)return;
-  logEl.innerHTML='';log('重试 '+failedKeys.length+' 个失败文件...','warn');
-  const retry=[...failedKeys];failedKeys=[];let ok=0,fail=0;
-  for(const k of retry){
-    try{const blob=await dbGet(k);if(!blob){fail++;failedKeys.push(k)}else{const ext=blob.type.split('/')[1]||'bin';download(blob,k+'.'+ext);ok++;log('✅ '+k+'.'+ext,'ok')}}catch(e){fail++;failedKeys.push(k)}
-    await new Promise(r=>setTimeout(r,500));
+  // Download each
+  let ok=0,fail=0;
+  for(let i=0;i<toDownload.length;i++){
+    const {key:k,blob}=toDownload[i];
+    try{
+      const ext=blob.type.split('/')[1]||'bin';
+      const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=k+'.'+ext;a.click();
+      setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+      ok++;log('✅ '+(i+1)+'/'+toDownload.length+' '+k+'.'+ext,'ok')
+    }catch(e){fail++;log('❌ '+k,'fail')}
+    await new Promise(r=>setTimeout(r,200));
   }
-  log('重试: ✅'+ok+' ❌'+fail,'ok');
-  if(fail>0){btnRetry.style.display='inline-block';infoEl.innerHTML='仍有 '+fail+' 个失败，请再次点击重试'}
-  else{btnRetry.style.display='none';infoEl.innerHTML='全部成功！'}
+
+  log('--- 完成: ✅'+ok+' ❌'+fail+' 共 '+toDownload.length+' ---','ok');
+  infoEl.innerHTML='全部下载到 Documents 文件夹后，运行项目中的 sync_media.bat 自动同步并推送';
+  btnGo.disabled=false;btnGo.textContent='🔄 重新下载';
 }
 </script>
 </body>
