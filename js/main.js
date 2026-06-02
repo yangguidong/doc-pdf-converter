@@ -99,6 +99,8 @@ async function loadCardMedia(card){
   const ck=(item.imgs&&item.imgs.length)?item.imgs[0]:item.id;
   let blob=await dbGet(ck);
   let url=blob?URL.createObjectURL(blob):'uploads/'+ck+(item.type==='video'?'.mp4':'.jpg');
+  // Use thumbnail for cards (much smaller, loads instantly)
+  if(item.type!=='video'&&!blob)url='uploads/thumb_'+ck+'.jpg';
   card.dataset.loaded='1';
   const ph=card.querySelector('.card__ph');if(ph)ph.remove();
   const el=document.createElement(item.type==='video'?'video':'img');
