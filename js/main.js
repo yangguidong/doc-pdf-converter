@@ -302,6 +302,18 @@ function filterItems(q){
 // === Item Ordering ===
 function moveItem(item,dir){const coll=items();const i=coll.indexOf(item);if(i<0)return;const j=i+dir;if(j<0||j>=coll.length)return;coll.splice(i,1);coll.splice(j,0,item);save();render()}
 
+// === Typing Text ===
+let typingTimer=null;
+function initTypingText(){
+  const el=document.getElementById('typingText');const p=el?.parentElement;if(!el||!p)return;
+  if(edit){el.textContent=data.heroSub||'';el.style.borderRight='none';return}
+  el.style.borderRight='2px solid var(--accent)';
+  const texts=[data.heroSub||'创意视觉设计师'];try{const extra=['创意视觉设计师','UI/UX 设计师','品牌设计师','插画艺术家','视觉传达设计师'];if(!texts.includes(extra[0]))texts.push(...extra)}catch(e){}
+  let ti=0,ci=0,isDeleting=false;
+  function tick(){if(edit){el.textContent=data.heroSub||'';el.style.borderRight='none';return}
+    const txt=texts[ti%texts.length];if(isDeleting){ci--;el.textContent=txt.substring(0,ci);if(ci<=0){isDeleting=false;ti++;typingTimer=setTimeout(tick,400);return}else{typingTimer=setTimeout(tick,35)}}else{ci++;el.textContent=txt.substring(0,ci);if(ci>=txt.length){typingTimer=setTimeout(()=>{isDeleting=true;tick()},2500);return}else{typingTimer=setTimeout(tick,80+Math.random()*60)}}}
+  typingTimer=setTimeout(tick,600)
+}
 
 // === Enhanced Card Render (with order buttons) ===
 const origRenderCard=renderCard;
